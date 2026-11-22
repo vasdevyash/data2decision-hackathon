@@ -70,7 +70,7 @@ s.append(P("<b>IEX Day-Ahead Market prices, 15-minute blocks</b>, published by t
 s.append(plain([
     ["Column", "What it holds", "How we use it"],
     ["mcp_rs_mwh", "Clearing price, ₹ per MWh", "Target: forecast it, then value every block at the actual price"],
-    ["datetime, block (1–96)", "Start of the 15-minute block", "Time and calendar features"],
+    ["datetime, date, block (1–96), time_block", "When the 15-minute block starts: timestamp, day, block number, clock range", "Time and calendar features"],
     ["purchase_bid_mw, sell_bid_mw", "Total buy and sell bids, MW", "Features from earlier days only"],
     ["mcv_mw, final_scheduled_volume_mw", "Cleared and scheduled volume, MW", "Features from earlier days; checks the battery is too small to move prices"],
     ["congestion", "Whether regional congestion split the market", "Limitation flag"],
