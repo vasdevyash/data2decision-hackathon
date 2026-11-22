@@ -24,3 +24,7 @@ venv/
 
 # Small derived weather indices (Open-Meteo, CC BY 4.0) so the M3 notebook runs from a fresh clone
 !data/processed/weather_daily.csv
+
+# M4 app needs these small result files
+!outputs/m4_daily_results.csv
+!outputs/bid_*.csv

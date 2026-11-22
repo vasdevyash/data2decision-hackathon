@@ -1,0 +1,247 @@
+{
+ "test": {
+  "fixed": 75091,
+  "today_1": 102110,
+  "today_sun_1": 102965,
+  "blend_1": 105034,
+  "lear_1": 104307,
+  "chronos_1": 104552,
+  "perfect_1": 107757,
+  "today_2": 121401,
+  "today_sun_2": 121730,
+  "blend_2": 123997,
+  "lear_2": 122967,
+  "chronos_2": 123262,
+  "perfect_2": 130354
+ },
+ "validate": {
+  "fixed": 57139,
+  "today_1": 94978,
+  "today_sun_1": 95741,
+  "blend_1": 97744,
+  "lear_1": 97275,
+  "chronos_1": 97329,
+  "perfect_1": 101168,
+  "today_2": 113643,
+  "today_sun_2": 114713,
+  "blend_2": 116695,
+  "lear_2": 115914,
+  "chronos_2": 116064,
+  "perfect_2": 121796
+ },
+ "share_test": {
+  "today": 0.931,
+  "today_sun": 0.934,
+  "blend": 0.951,
+  "lear": 0.943,
+  "chronos": 0.946,
+  "fixed_vs_p1": 0.697
+ },
+ "share_test_1": {
+  "today": 0.948,
+  "blend": 0.975
+ },
+ "tests": {
+  "validate": {
+   "blend_vs_today_2": {
+    "gain": 3053,
+    "ci": [
+     1924,
+     4259
+    ],
+    "p": 1.3424230516090319e-06,
+    "share_days_better": 0.564
+   },
+   "blend_vs_today_1": {
+    "gain": 2766,
+    "ci": [
+     1886,
+     3658
+    ],
+    "p": 1.9090339975491588e-08,
+    "share_days_better": 0.537
+   },
+   "blend_vs_todaysun_2": {
+    "gain": 1983,
+    "ci": [
+     1028,
+     2937
+    ],
+    "p": 1.5200126471492936e-05,
+    "share_days_better": 0.575
+   },
+   "blend_vs_fixed_1": {
+    "gain": 40604,
+    "ci": [
+     35097,
+     46459
+    ],
+    "p": 0.0,
+    "share_days_better": 0.992
+   }
+  },
+  "test": {
+   "blend_vs_today_2": {
+    "gain": 2597,
+    "ci": [
+     955,
+     4071
+    ],
+    "p": 0.0005670750194499696,
+    "share_days_better": 0.595
+   },
+   "blend_vs_today_1": {
+    "gain": 2924,
+    "ci": [
+     2115,
+     3819
+    ],
+    "p": 2.9178084393066683e-09,
+    "share_days_better": 0.57
+   },
+   "blend_vs_todaysun_2": {
+    "gain": 2268,
+    "ci": [
+     856,
+     3601
+    ],
+    "p": 0.0010085416913880874,
+    "share_days_better": 0.575
+   },
+   "blend_vs_fixed_1": {
+    "gain": 29943,
+    "ci": [
+     24581,
+     35218
+    ],
+    "p": 0.0,
+    "share_days_better": 0.986
+   }
+  }
+ },
+ "months_positive": 22,
+ "months_total": 25,
+ "segments": {
+  "Jul\u2013Sep": {
+   "gain": 3348,
+   "share": 0.943
+  },
+  "Mar\u2013Jun": {
+   "gain": 3877,
+   "share": 0.939
+  },
+  "Oct\u2013Feb": {
+   "gain": 1105,
+   "share": 0.965
+  },
+  "Fri": {
+   "gain": 1233,
+   "share": 0.954
+  },
+  "Mon": {
+   "gain": 3314,
+   "share": 0.958
+  },
+  "Sat": {
+   "gain": 2629,
+   "share": 0.964
+  },
+  "Sun": {
+   "gain": 7219,
+   "share": 0.912
+  },
+  "Thu": {
+   "gain": -1895,
+   "share": 0.938
+  },
+  "Tue": {
+   "gain": 3280,
+   "share": 0.967
+  },
+  "Wed": {
+   "gain": 2397,
+   "share": 0.952
+  }
+ },
+ "share_days_two_rounds": 0.567,
+ "sensitivity": [
+  {
+   "setting": "Wear \u20b90/MWh",
+   "assistant \u20b9/day": 150664,
+   "tomorrow = today \u20b9/day": 147971,
+   "extra \u20b9/day": 2693,
+   "share of best": 0.959
+  },
+  {
+   "setting": "Wear \u20b9500/MWh",
+   "assistant \u20b9/day": 136954,
+   "tomorrow = today \u20b9/day": 134703,
+   "extra \u20b9/day": 2250,
+   "share of best": 0.955
+  },
+  {
+   "setting": "Wear \u20b91,000/MWh (base)",
+   "assistant \u20b9/day": 123997,
+   "tomorrow = today \u20b9/day": 121401,
+   "extra \u20b9/day": 2597,
+   "share of best": 0.951
+  },
+  {
+   "setting": "Wear \u20b91,500/MWh",
+   "assistant \u20b9/day": 111462,
+   "tomorrow = today \u20b9/day": 108237,
+   "extra \u20b9/day": 3225,
+   "share of best": 0.946
+  },
+  {
+   "setting": "Exchange fee \u20b920/MWh each way",
+   "assistant \u20b9/day": 122912,
+   "tomorrow = today \u20b9/day": 120271,
+   "extra \u20b9/day": 2641,
+   "share of best": 0.951
+  },
+  {
+   "setting": "4-hour battery (10 MW / 40 MWh)",
+   "assistant \u20b9/day": 206471,
+   "tomorrow = today \u20b9/day": 203254,
+   "extra \u20b9/day": 3217,
+   "share of best": 0.963
+  },
+  {
+   "setting": "Round-trip efficiency 85%",
+   "assistant \u20b9/day": 120062,
+   "tomorrow = today \u20b9/day": 117370,
+   "extra \u20b9/day": 2691,
+   "share of best": 0.95
+  }
+ ],
+ "risk": {
+  "today_2": {
+   "worst 5% of days, \u20b9": 39371,
+   "worst month avg, \u20b9/day": 82854,
+   "losing days": 0
+  },
+  "blend_2": {
+   "worst 5% of days, \u20b9": 39734,
+   "worst month avg, \u20b9/day": 84022,
+   "losing days": 0
+  },
+  "fixed": {
+   "worst 5% of days, \u20b9": 12981,
+   "worst month avg, \u20b9/day": 27575,
+   "losing days": 2
+  }
+ },
+ "example_day": {
+  "date": "2025-12-30",
+  "assistant": 168023,
+  "today": 165908,
+  "perfect": 169002
+ },
+ "next_day": {
+  "date": "2026-11-22",
+  "expected_profit": 126021,
+  "buy_mwh": 38.4,
+  "sell_mwh": 33.8
+ }
+}

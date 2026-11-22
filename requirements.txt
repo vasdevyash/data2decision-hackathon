@@ -10,3 +10,5 @@ duckdb
 holidays
 chronos-forecasting
 torch
+streamlit
+plotly

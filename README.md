@@ -84,6 +84,19 @@ python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\act
 pip install -r requirements.txt
 ```
 
+## Run the battery trading assistant (M4 demo)
+
+```bash
+pip install -r requirements.txt
+streamlit run app/app.py
+```
+
+Three tabs: **Tomorrow's bid** (forecast, battery plan, downloadable 96-slot bid), **Replay any day** (any validation or test day,
+our plan vs tomorrow = today vs a perfect guess) and **Track record** (two-year results). Sidebar sliders change battery size,
+efficiency, wear cost, fees and rounds per day; the plan re-optimises instantly.
+
+Milestone files: `docs/D01_M2.pdf`, `docs/D01_M3.pdf` + `notebooks/D01_M3_eda.ipynb`, `docs/D01_M4.pdf` + `notebooks/D01_M4_solution.ipynb` + `app/app.py`.
+
 ## Working together
 
 1. `git pull` before you start.

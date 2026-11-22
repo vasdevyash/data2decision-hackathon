@@ -41,3 +41,30 @@ def fixed_rule(p, deg=1000.0):
     """Canvas rule made feasible: store 18 MWh over 11:00-15:00, release it over 18:00-22:00."""
     c = np.zeros(T); d = np.zeros(T); c[44:60] = 18 / EC / 16; d[72:88] = 18 * ED / 16
     return settle(c, d, p, deg)
+
+
+def solve_custom(p, mw=10.0, mwh=20.0, rte=0.88, deg=1000.0, cycles=2, fee=0.0, soc_min_frac=0.10):
+    """General battery plan for the demo app and sensitivity tests.
+
+    Maximise  sum_t p_t*d_t - (p_t + fee)*c_t - (deg + fee)*d_t   over one day of 96 blocks
+    subject to  s_t = s_{t-1} + eta*c_t - d_t/eta         (state of charge, eta = sqrt(rte))
+                s_min <= s_t <= mwh,  s_0 = s_96 = s_min   (start and end empty)
+                0 <= c_t, d_t <= mw/4                       (power limit per 15 minutes)
+                sum_t d_t/eta <= cycles*(mwh - s_min)       (wear limit: equivalent full cycles)
+    Returns charge and discharge in grid MWh per block, and the state of charge path.
+    """
+    n = len(p); eta = np.sqrt(rte); smin = soc_min_frac * mwh; pmax = mw / 4
+    A = lil_matrix((n, 3 * n)); b = np.zeros(n)
+    for t in range(n):
+        A[t, 2 * n + t] = 1; A[t, t] = -eta; A[t, n + t] = 1 / eta
+        if t > 0: A[t, 2 * n + t - 1] = -1
+        else: b[t] = smin
+    Aub = lil_matrix((1, 3 * n)); Aub[0, n:2 * n] = 1 / eta
+    cost = np.r_[np.asarray(p) + fee, -(np.asarray(p) - deg - fee), np.zeros(n)]
+    bnds = [(0, pmax)] * (2 * n) + [(smin, mwh)] * (n - 1) + [(smin, smin)]
+    r = linprog(cost, A_ub=Aub.tocsr(), b_ub=[cycles * (mwh - smin)], A_eq=A.tocsr(), b_eq=b, bounds=bnds, method="highs")
+    return r.x[:n], r.x[n:2 * n], r.x[2 * n:]
+
+
+def settle_custom(c, d, p, deg=1000.0, fee=0.0):
+    return float(p @ d - p @ c - deg * d.sum() - fee * (c.sum() + d.sum()))
