@@ -14,7 +14,7 @@
 import os, sys, json
 from pathlib import Path
 import numpy as np, pandas as pd, duckdb, holidays
-import matplotlib; matplotlib.use("Agg")
+import matplotlib; matplotlib.use("Agg"); import matplotlib.dates
 import matplotlib.pyplot as plt
 from matplotlib import font_manager as fm
 from scipy import stats
@@ -270,6 +270,174 @@ M["anomalies"]["top10_share_sunday_or_holiday"] = round(float(np.mean([(days.dow
 M["anomalies"]["sunday_spread_vs_weekday"] = round(float(days[days.dow == 0].spread.mean() / days[days.dow.between(1, 5)].spread.mean()), 3)
 M["anomalies"]["fixed_worst_day_evening_minus_midday"] = round(float(days.evening_midday_gap[R.fixed.idxmin()]))
 print(json.dumps(M["anomalies"], indent=1))
+
+# %% [markdown]
+# ## 8. Variance-stabilised prices and day types (k-means on daily curves)
+# Prices are transformed with the median/MAD-normalised asinh (Uniejewski, Weron & Ziel, 2018), the standard
+# variance-stabilising transform in electricity price forecasting. Each day is a 96-point curve; k-means groups
+# days by shape and level. We then ask how often tomorrow is a different type from today, and what that costs.
+
+# %%
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+MED, MAD = float(np.median(P.values)), float(stats.median_abs_deviation(P.values, axis=None, scale="normal"))
+fwd = lambda x: np.arcsinh((x - MED) / MAD); inv = lambda z: np.sinh(z) * MAD + MED
+Z = fwd(P.values)
+M["vst"] = {"skew_raw": round(float(stats.skew(P.values.ravel())), 2), "skew_asinh": round(float(stats.skew(Z.ravel())), 2),
+            "kurt_raw": round(float(stats.kurtosis(P.values.ravel())), 2), "kurt_asinh": round(float(stats.kurtosis(Z.ravel())), 2)}
+sil = {k: float(silhouette_score(Z, KMeans(k, n_init=10, random_state=0).fit_predict(Z))) for k in range(2, 7)}
+K = 4
+km = KMeans(K, n_init=20, random_state=0).fit(Z); lab = pd.Series(km.labels_, index=P.index)
+# name clusters by their shape
+prof = P.groupby(lab).mean()
+def name(c):
+    r = prof.loc[c]; mid = r.loc[41:64].mean(); eve = r.loc[73:96].mean(); morn = r.loc[25:36].mean(); lvl = r.mean()
+    if eve > 9000 * 0.85 and r.loc[1:24].mean() > 7000: return "Scarce (capped evening and night)"
+    if morn - mid > 2500: return "Double peak (morning + evening)"
+    if lvl < 4000: return "Flat and cheap"
+    return "Solar dip, evening peak"
+names = {c: name(c) for c in prof.index}
+if len(set(names.values())) < K:  # fall back to ordered labels if two clusters share a name
+    for i, c in enumerate(prof.mean(axis=1).sort_values().index): names[c] = f"{names[c]} ({i + 1})"
+lab_n = lab.map(names)
+dt_tab = pd.DataFrame({"share": lab_n.value_counts(normalize=True)})
+RR = R.join(lab_n.rename("type")).join(lab_n.shift(1).rename("type_prev"))
+dt_tab["sunday_share"] = RR.groupby("type").apply(lambda g: (g.dow == 0).mean())
+dt_tab["winter_share"] = RR.groupby("type").apply(lambda g: (g.season == "Oct-Feb").mean())
+dt_tab["v2_hind"] = RR.groupby("type").v2_hind.mean()
+dt_tab["lag1_capture"] = RR.groupby("type").apply(lambda g: g.lag1_1.sum() / g.hind1.sum())
+trans_m = pd.crosstab(lab_n.shift(1), lab_n, normalize="index")
+same = RR.type == RR.type_prev
+M["day_types"] = {"k": K, "silhouette": {str(k): round(v, 3) for k, v in sil.items()},
+                  "table": {t: {c: round(float(v), 3) for c, v in r.items()} for t, r in dt_tab.iterrows()},
+                  "share_type_change": round(float(1 - same.mean()), 3),
+                  "capture_same_type": round(float(RR[same].lag1_1.sum() / RR[same].hind1.sum()), 3),
+                  "capture_type_change": round(float(RR[~same].lag1_1.sum() / RR[~same].hind1.sum()), 3),
+                  "regret_share_on_changes": round(float((RR.hind1 - RR.lag1_1)[~same].sum() / (RR.hind1 - RR.lag1_1).sum()), 3)}
+print(json.dumps(M["day_types"], indent=1))
+
+order_t = dt_tab.sort_values("share", ascending=False).index.tolist()
+cols = [ACC, "#6b8fc2", "0.45", "#c0392b"]
+fig, axs = plt.subplots(1, 2, figsize=(7.4, 2.75), gridspec_kw={"width_ratios": [1.45, 1]})
+xh = (np.arange(96)) / 4
+for t, c in zip(order_t, cols):
+    members = lab_n[lab_n == t].index
+    axs[0].plot(xh, P.loc[members].mean().values / 1000, color=c, lw=1.6, label=f"{t} ({dt_tab.share[t] * 100:.0f}%)")
+axs[0].set_xticks(range(0, 25, 3)); axs[0].set_xlim(0, 24); axs[0].set_ylim(0, 10.5); axs[0].set_xlabel("hour of day")
+axs[0].set_ylabel("₹ thousand/MWh"); axs[0].set_title("Average daily curve of each day type")
+axs[0].legend(frameon=False, fontsize=6.8, loc="upper center", bbox_to_anchor=(0.5, -0.24), ncol=2)
+tm = trans_m.reindex(index=order_t, columns=order_t) * 100
+im = axs[1].imshow(tm.values, cmap="Blues", vmin=0, vmax=100)
+for i in range(K):
+    for j in range(K): axs[1].text(j, i, f"{tm.values[i, j]:.0f}", ha="center", va="center", fontsize=7.5, color="white" if tm.values[i, j] > 55 else "0.15")
+short = [t.split(" (")[0].split(",")[0].replace("Solar dip", "Solar dip").replace("Double peak", "Double pk") for t in order_t]
+SHORT = {"Solar dip, evening peak": "Solar dip", "Flat and cheap": "Flat", "Double peak (morning + evening)": "Double peak", "Scarce (capped evening and night)": "Scarce"}
+tl = [SHORT.get(t, t[:10]) for t in order_t]
+axs[1].set_xticks(range(K)); axs[1].set_xticklabels(tl, fontsize=7, rotation=20); axs[1].set_yticks(range(K)); axs[1].set_yticklabels(tl, fontsize=7)
+axs[1].set_xlabel("type tomorrow"); axs[1].set_ylabel("type today"); axs[1].set_title("Next-day type, % of days")
+for s_ in axs[1].spines.values(): s_.set_visible(False)
+fig.tight_layout(); fig.savefig(FIG / "m3_daytypes.png", dpi=250); plt.close(fig)
+M["day_type_order"] = order_t
+
+# %% [markdown]
+# ## 9. Structural breaks (PELT changepoint detection, Killick et al. 2012)
+
+# %%
+import ruptures as rpt
+wkly = days.mean_price.resample("W").mean().dropna()
+algo = rpt.Pelt(model="l2", min_size=8).fit(wkly.values.reshape(-1, 1) / 1000)
+bk = algo.predict(pen=12)
+seg_edges = [0] + bk
+segs = [(wkly.index[a].date(), wkly.index[b - 1].date(), float(wkly.iloc[a:b].mean())) for a, b in zip(seg_edges[:-1], seg_edges[1:])]
+M["changepoints"] = [[str(a), str(b), round(m)] for a, b, m in segs]
+print(M["changepoints"])
+fig, ax = plt.subplots(figsize=(7.4, 1.75))
+ax.plot(wkly.index, wkly.values / 1000, color="0.55", lw=0.9)
+for a, b, m in segs: ax.hlines(m / 1000, pd.Timestamp(a), pd.Timestamp(b), color=ACC, lw=2.2)
+for b in bk[:-1]: ax.axvline(wkly.index[b], color="#c0392b", lw=0.7, ls="--")
+for sp_, c in [("2024-11-22", "validate"), ("2025-11-22", "test")]:
+    ax.text(pd.Timestamp(sp_), 9.3, c, fontsize=7, color="0.35"); ax.axvline(pd.Timestamp(sp_), color="0.75", lw=0.6)
+ax.set_ylabel("₹ thousand/MWh"); ax.set_ylim(0, 10); ax.set_title("Weekly average price (grey), PELT segments (blue) and breaks (red)")
+fig.tight_layout(); fig.savefig(FIG / "m3_changepoints.png", dpi=250); plt.close(fig)
+
+# %% [markdown]
+# ## 10. The literature's benchmark forecaster: LEAR, scored by trading profit
+# LEAR (Lago et al., 2021): one LASSO-regularised linear model per block on asinh-transformed prices, with
+# all 96 prices from D−1, D−2 and D−7, weekday and holiday dummies and the day-D weather forecast as inputs;
+# the penalty is chosen by AIC (LARS). We recalibrate monthly on an expanding window (the paper recalibrates
+# daily; monthly keeps this notebook fast). Each forecast is turned into a schedule by the same optimiser and
+# settled at actual prices. Significance: Diebold–Mariano test on the daily profit difference with a
+# Newey–West variance (7 lags), plus the week-block bootstrap.
+
+# %%
+from sklearn.linear_model import LassoLarsIC
+from sklearn.preprocessing import StandardScaler
+WX = ["solar_midday_wm2", "cloud_midday_pct", "temp_max_c", "temp_evening_c", "wind_kmh", "wind_evening_kmh"]
+Zdf = pd.DataFrame(Z, index=P.index, columns=P.columns)
+def feats(use_wx=True):
+    f = [Zdf.shift(1).add_prefix("l1_"), Zdf.shift(2).add_prefix("l2_"), Zdf.shift(7).add_prefix("l7_"),
+         pd.get_dummies(days.dow.astype(int), prefix="dow").astype(float), days[["holiday"]].astype(float)]
+    if use_wx: f.append(days[WX])
+    return pd.concat(f, axis=1).dropna()
+def lear(use_wx=True):
+    X = feats(use_wx); Y = Zdf.loc[X.index]; out = pd.DataFrame(index=X.index[X.index >= "2024-11-22"], columns=P.columns, dtype=float)
+    for m0 in pd.date_range("2024-11-22", "2026-11-22", freq="MS").insert(0, pd.Timestamp("2024-11-22")):
+        m1 = (m0 + pd.offsets.MonthBegin(1)); idx = out.index[(out.index >= m0) & (out.index < m1)]
+        if len(idx) == 0: continue
+        tr = X.index < m0; sc_ = StandardScaler().fit(X[tr]); Xtr = sc_.transform(X[tr]); Xte = sc_.transform(X.loc[idx])
+        for b in P.columns:
+            mdl = LassoLarsIC(criterion="aic").fit(Xtr, Y.loc[tr, b].values); out.loc[idx, b] = mdl.predict(Xte)
+    return inv(out.values), out.index
+def dm_test(d, lags=7):
+    d = np.asarray(d, float); n = len(d); dc = d - d.mean(); g = [np.dot(dc[k:], dc[:n - k]) / n for k in range(lags + 1)]
+    v = g[0] + 2 * sum((1 - k / (lags + 1)) * g[k] for k in range(1, lags + 1)); stat = d.mean() / np.sqrt(v / n)
+    return float(stat), float(2 * (1 - stats.norm.cdf(abs(stat))))
+lear_res = {}
+for tag, use_wx in [("lear", True), ("lear_nowx", False)]:
+    F, fidx = lear(use_wx)
+    pr = []
+    for i, day in enumerate(fidx):
+        p = P.loc[day].values; r = {"d": day}
+        for cyc in (1, 2): c, d = bt.solve(F[i], DEG, cyc); r[f"{tag}_{cyc}"] = bt.settle(c, d, p, DEG)
+        pr.append(r)
+    R = R.join(pd.DataFrame(pr).set_index("d"))
+    err_f = np.abs(F - P.loc[fidx].values)[~CAP.loc[fidx].values].mean()
+    lear_res[tag] = {"mae_uncapped": round(float(err_f))}
+    if tag == "lear": F_LEAR, IDX_LEAR = F, fidx
+mae_l1 = np.abs(P.shift(1).loc[IDX_LEAR].values - P.loc[IDX_LEAR].values)[~CAP.loc[IDX_LEAR].values].mean()
+mae_l7 = np.abs(P.shift(7).loc[IDX_LEAR].values - P.loc[IDX_LEAR].values)[~CAP.loc[IDX_LEAR].values].mean()
+lear_res["mae_lag1_uncapped"] = round(float(mae_l1)); lear_res["mae_lag7_uncapped"] = round(float(mae_l7))
+for sp in ["validate", "test"]:
+    r = R[R.split == sp]
+    for tag in ["lear", "lear_nowx"]:
+        for cyc in (1, 2):
+            dlt = r[f"{tag}_{cyc}"] - r[f"lag1_{cyc}"]; lo, hi = week_bootstrap(dlt); st_, pv = dm_test(dlt.values)
+            lear_res.setdefault(sp, {})[f"{tag}_{cyc}"] = {"mean": round(float(r[f"{tag}_{cyc}"].mean())), "gain_vs_lag1": round(float(dlt.mean())),
+                "ci": [round(lo), round(hi)], "dm": round(st_, 2), "p": round(pv, 4),
+                "capture": round(float(r[f"{tag}_{cyc}"].sum() / r[f"hind{cyc}"].sum()), 3)}
+M["lear"] = lear_res
+print(json.dumps(lear_res, indent=1))
+
+# cumulative profit gained over the yesterday's-prices schedule (up to 2 cycles), validate + test
+oos = R[R.split != "train"].copy()
+oos["cond"] = np.where(oos.v2_prev > M["conditional_cycling"]["threshold"], oos.wk_2, oos.wk_1)
+fig, axs = plt.subplots(1, 2, figsize=(7.4, 2.3), gridspec_kw={"width_ratios": [1.5, 1]})
+for col, lbl, c in [("lear_2", "LEAR forecast", ACC), ("cond", "Two simple rules (Sunday + cycling)", "0.45")]:
+    axs[0].plot(oos.index, (oos[col] - oos.lag1_2).cumsum() / 1e7, color=c, lw=1.5, label=lbl)
+axs[0].axhline(0, color="0.7", lw=0.6); axs[0].axvline(pd.Timestamp("2025-11-22"), color="0.75", lw=0.6)
+axs[0].text(pd.Timestamp("2025-11-29"), 0.02, "test year", fontsize=7, color="0.35")
+axs[0].set_ylabel("₹ crore, cumulative"); axs[0].set_title("Profit gained over yesterday's prices (≤2 cycles)")
+axs[0].legend(frameon=False, fontsize=6.8, loc="upper left"); axs[0].xaxis.set_major_locator(matplotlib.dates.MonthLocator(bymonth=[1, 4, 7, 10]))
+axs[0].xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%b %y")); axs[0].tick_params(axis="x", labelsize=7)
+labels = ["Fixed", "Last week", "Yesterday", "Simple rules", "LEAR", "Perfect"]
+t = R[R.split == "test"]; tt = t.assign(cond=np.where(t.v2_prev > M["conditional_cycling"]["threshold"], t.wk_2, t.wk_1))
+vals = [tt.fixed.mean(), tt.lag7_2.mean(), tt.lag1_2.mean(), tt.cond.mean(), tt.lear_2.mean(), tt.hind2.mean()]
+axs[1].barh(range(6)[::-1], np.array(vals) / 1000, color=["#c0392b", "0.7", "0.55", "0.45", ACC, "#dfe5ee"], height=0.62)
+for yi, v in zip(range(6)[::-1], vals): axs[1].text(v / 1000 + 1.5, yi, f"{v / 1000:.0f}", va="center", fontsize=7)
+axs[1].set_yticks(range(6)[::-1]); axs[1].set_yticklabels(labels, fontsize=7.5); axs[1].set_xlim(0, 155)
+axs[1].set_title("Test year, ₹ thousand/day (≤2 cycles)"); axs[1].tick_params(axis="y", length=0)
+fig.tight_layout(); fig.savefig(FIG / "m3_lear.png", dpi=250); plt.close(fig)
+M["test_ladder_2c"] = {k: round(float(v)) for k, v in zip(labels, vals)}
 
 # %%
 json.dump(M, open(ROOT / "outputs/m3_metrics.json", "w"), indent=1, default=float)

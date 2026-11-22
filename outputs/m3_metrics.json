@@ -269,5 +269,198 @@
   "top10_share_sunday_or_holiday": 1.0,
   "sunday_spread_vs_weekday": 0.793,
   "fixed_worst_day_evening_minus_midday": 0
+ },
+ "vst": {
+  "skew_raw": 0.94,
+  "skew_asinh": 0.54,
+  "kurt_raw": -0.49,
+  "kurt_asinh": -0.95
+ },
+ "day_types": {
+  "k": 4,
+  "silhouette": {
+   "2": 0.337,
+   "3": 0.298,
+   "4": 0.283,
+   "5": 0.255,
+   "6": 0.236
+  },
+  "table": {
+   "Solar dip, evening peak": {
+    "share": 0.363,
+    "sunday_share": 0.111,
+    "winter_share": 0.044,
+    "v2_hind": 6510.751,
+    "lag1_capture": 0.935
+   },
+   "Flat and cheap": {
+    "share": 0.241,
+    "sunday_share": 0.303,
+    "winter_share": 0.541,
+    "v2_hind": 4003.508,
+    "lag1_capture": 0.924
+   },
+   "Double peak (morning + evening)": {
+    "share": 0.222,
+    "sunday_share": 0.064,
+    "winter_share": 0.922,
+    "v2_hind": 56144.258,
+    "lag1_capture": 0.926
+   },
+   "Scarce (capped evening and night)": {
+    "share": 0.174,
+    "sunday_share": 0.086,
+    "winter_share": 0.172,
+    "v2_hind": 8276.167,
+    "lag1_capture": 0.945
+   }
+  },
+  "share_type_change": 0.231,
+  "capture_same_type": 0.935,
+  "capture_type_change": 0.924,
+  "regret_share_on_changes": 0.239
+ },
+ "day_type_order": [
+  "Solar dip, evening peak",
+  "Flat and cheap",
+  "Double peak (morning + evening)",
+  "Scarce (capped evening and night)"
+ ],
+ "changepoints": [
+  [
+   "2023-04-02",
+   "2023-08-13",
+   5003
+  ],
+  [
+   "2023-08-20",
+   "2023-10-22",
+   7016
+  ],
+  [
+   "2023-10-29",
+   "2024-07-28",
+   4861
+  ],
+  [
+   "2024-08-04",
+   "2026-04-19",
+   3987
+  ],
+  [
+   "2026-04-26",
+   "2026-11-22",
+   5516
+  ]
+ ],
+ "lear": {
+  "lear": {
+   "mae_uncapped": 481
+  },
+  "lear_nowx": {
+   "mae_uncapped": 482
+  },
+  "mae_lag1_uncapped": 633,
+  "mae_lag7_uncapped": 972,
+  "validate": {
+   "lear_1": {
+    "mean": 97600,
+    "gain_vs_lag1": 2622,
+    "ci": [
+     1843,
+     3453
+    ],
+    "dm": 5.73,
+    "p": 0.0,
+    "capture": 0.965
+   },
+   "lear_2": {
+    "mean": 116800,
+    "gain_vs_lag1": 3158,
+    "ci": [
+     2111,
+     4289
+    ],
+    "dm": 5.32,
+    "p": 0.0,
+    "capture": 0.959
+   },
+   "lear_nowx_1": {
+    "mean": 97651,
+    "gain_vs_lag1": 2673,
+    "ci": [
+     1918,
+     3495
+    ],
+    "dm": 5.93,
+    "p": 0.0,
+    "capture": 0.965
+   },
+   "lear_nowx_2": {
+    "mean": 116854,
+    "gain_vs_lag1": 3211,
+    "ci": [
+     2221,
+     4306
+    ],
+    "dm": 5.58,
+    "p": 0.0,
+    "capture": 0.959
+   }
+  },
+  "test": {
+   "lear_1": {
+    "mean": 104648,
+    "gain_vs_lag1": 2538,
+    "ci": [
+     1688,
+     3470
+    ],
+    "dm": 5.21,
+    "p": 0.0,
+    "capture": 0.971
+   },
+   "lear_2": {
+    "mean": 123673,
+    "gain_vs_lag1": 2273,
+    "ci": [
+     1014,
+     3557
+    ],
+    "dm": 3.31,
+    "p": 0.0009,
+    "capture": 0.949
+   },
+   "lear_nowx_1": {
+    "mean": 104771,
+    "gain_vs_lag1": 2661,
+    "ci": [
+     1844,
+     3551
+    ],
+    "dm": 5.8,
+    "p": 0.0,
+    "capture": 0.972
+   },
+   "lear_nowx_2": {
+    "mean": 123781,
+    "gain_vs_lag1": 2381,
+    "ci": [
+     1144,
+     3654
+    ],
+    "dm": 3.58,
+    "p": 0.0003,
+    "capture": 0.95
+   }
+  }
+ },
+ "test_ladder_2c": {
+  "Fixed": 75091,
+  "Last week": 112159,
+  "Yesterday": 121401,
+  "Simple rules": 122015,
+  "LEAR": 123673,
+  "Perfect": 130354
  }
 }
