@@ -1,0 +1,20 @@
+# Data stays local
+data/raw/*
+data/processed/*
+!data/**/.gitkeep
+*.csv
+*.xlsx
+*.parquet
+*.arff
+*.zip
+
+# Python / Jupyter
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Secrets and OS junk
+.env
+.DS_Store
