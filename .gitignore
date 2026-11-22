@@ -18,3 +18,6 @@ venv/
 # Secrets and OS junk
 .env
 .DS_Store
+
+# Public IEX price data is shared with the team
+!data/raw/iex_dam_15min.csv

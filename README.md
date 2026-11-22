@@ -57,11 +57,23 @@ docs/              problem statement, canvas, slides, notes
 
 ## Data
 
-Datasets are **not** pushed to GitHub (the repo is public and some datasets carry licences that
-forbid redistribution). Put files in `data/raw/` on your own machine; `.gitignore` keeps them out.
-Record each dataset's source link here:
+**`data/raw/iex_dam_15min.csv`**: IEX Day-Ahead Market clearing prices, 15-minute blocks,
+1 Apr 2022 to 21 Nov 2026 (162,816 rows = 1,696 days × 96 blocks, no gaps or duplicates).
+Source: [IEX market snapshot](https://www.iexindia.com/market-data/day-ahead-market/market-snapshot).
+Refresh or change the window with `python src/download_iex_dam.py [YYYY-MM-DD] [YYYY-MM-DD]`.
 
-- _dataset name – source link – licence_
+| Column | Meaning |
+|---|---|
+| `datetime`, `date`, `block` (1–96), `time_block` | when the 15-minute block starts |
+| `purchase_bid_mw`, `sell_bid_mw` | total buy and sell bids |
+| `mcv_mw`, `final_scheduled_volume_mw` | cleared and scheduled volume |
+| `mcp_rs_mwh` | **market clearing price, ₹/MWh: the target** |
+| `congestion` | YES when regional congestion split the market (~2% of blocks) |
+
+Watch out: prices hit regulatory caps (₹20,000 early in 2022, ₹10,000 later; ~19% of blocks sit
+at ₹10,000), so the price distribution is clipped at the top.
+
+Other datasets stay local in `data/raw/` and are not pushed.
 
 ## Getting started
 
