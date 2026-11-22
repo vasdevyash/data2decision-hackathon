@@ -7,21 +7,26 @@ fm.fontManager.addfont("/System/Library/Fonts/HelveticaNeue.ttc")
 plt.rcParams.update({"font.family": "Helvetica Neue", "font.size": 9, "axes.spines.top": False, "axes.spines.right": False,
                      "axes.edgecolor": "0.35", "xtick.color": "0.25", "ytick.color": "0.25", "axes.labelcolor": "0.2"})
 d = pd.read_csv(csv, parse_dates=["datetime"]); t = d[d.datetime >= "2025-11-22"]
-h = t.groupby(t.block).mcp_rs_mwh.mean(); x = (h.index - 1) / 4
-fig, ax = plt.subplots(figsize=(6.6, 2.3))
-ax.axvspan(11, 15, color="0.92", lw=0); ax.axvspan(18, 22, color="0.82", lw=0)
-ax.plot(x, h.values, color="black", lw=1.5); ax.axhline(10000, color="0.45", ls="--", lw=0.8)
-ax.text(13, 8600, "cheap: charge", ha="center", fontsize=8); ax.text(20, 2000, "dear: discharge", ha="center", fontsize=8)
-ax.text(0.2, 10250, "price ceiling ₹10,000", fontsize=7.5, color="0.35")
+g = t.groupby(t.block).mcp_rs_mwh; h = g.mean(); q1, q3 = g.quantile(0.25), g.quantile(0.75); x = (h.index - 1) / 4
+fig, ax = plt.subplots(figsize=(6.6, 2.05))
+ax.axvspan(11, 15, color="0.94", lw=0); ax.axvspan(18, 22, color="0.88", lw=0)
+ax.fill_between(x, q1.values, q3.values, color="#7f9fc4", alpha=0.35, lw=0); ax.plot(x, h.values, color="black", lw=1.5); ax.axhline(10000, color="0.45", ls="--", lw=0.8)
+ax.text(13, 8600, "cheap: charge", ha="center", fontsize=8); ax.text(20, 1200, "expensive: discharge", ha="center", fontsize=8)
+ax.text(0.2, 10250, "price ceiling ₹10,000", fontsize=7.5, color="0.35"); ax.text(0.3, 1200, "line: mean   blue band: middle 50% of days", fontsize=7.5, color="0.35")
 ax.set_xlim(0, 24); ax.set_ylim(0, 11000); ax.set_xticks(range(0, 25, 3)); ax.set_xticklabels([f"{i:02d}:00" for i in range(0, 25, 3)])
 ax.set_ylabel("₹ per MWh"); ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:,.0f}"))
 fig.tight_layout(); fig.savefig(f"{out}/fig1.png", dpi=250)
 # Values from src/dispatch_lp.py, test year 22 Nov 2025 - 21 Nov 2026, wear Rs 1,000/MWh
 labs = ["Fixed rule (1 cycle)", "Yesterday's prices (1 cycle)", "Yesterday's prices (up to 2 cycles)", "Perfect foresight (1 cycle)", "Perfect foresight (up to 2 cycles)"]
 vals = [75091, 102110, 121401, 107757, 130354]
-fig, ax = plt.subplots(figsize=(6.6, 2.0)); y = np.arange(5)[::-1]
+fig, ax = plt.subplots(figsize=(6.6, 1.85)); y = np.arange(5)[::-1]
 ax.barh(y, [v / 1000 for v in vals], color=["0.75", "0.4", "0.4", "0.86", "0.86"], height=0.62, lw=0)
 for yi, v in zip(y, vals): ax.text(v / 1000 + 1.5, yi, f"₹{v / 1000:,.0f}k", va="center", fontsize=8)
 ax.set_yticks(y); ax.set_yticklabels(labs, fontsize=8); ax.tick_params(axis="y", length=0); ax.set_xlim(0, 150)
-ax.set_xlabel("Average trading profit, ₹ thousand per day (test year)")
+ax.set_xlabel("Average trading profit, ₹ thousand per day (test year, wear ₹1,000/MWh)")
+def brk(y0, y1, x0, txt):
+    ax.plot([x0, x0 + 3, x0 + 3, x0], [y0, y0, y1, y1], color="0.2", lw=0.8); ax.text(x0 + 4.5, (y0 + y1) / 2 + (0.45 if y0 - y1 == 1 else 0), txt, va="center", fontsize=7.6, color="0.15")
+brk(2, 0, 150, "forecast prize ≤ ₹9k")
+brk(3, 2, 140, "2nd cycle +₹19k")
+ax.set_xlim(0, 185); ax.set_xticks(range(0, 141, 20)); ax.spines["bottom"].set_bounds(0, 140)
 fig.tight_layout(); fig.savefig(f"{out}/fig2.png", dpi=250)
