@@ -643,6 +643,7 @@ function renderAudit() {
 }
 
 mode = "replay"; showSettings(); showBizInputs(); buildCases(); renderTomorrow(); loadDay(false); renderCalendar(); renderCum(); staticTakeaways();
+const startTab = location.hash.replace("#", ""); if (["tmr", "replay", "proof", "biz", "audit"].includes(startTab) && startTab !== "tmr") showTab(startTab);
 </script>
 <script>
 // ---------------- IEX tab: how the Day-Ahead auction works (real slot figures from iex.js)
