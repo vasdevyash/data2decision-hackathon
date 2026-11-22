@@ -16,8 +16,6 @@ No synthetic data was used. Data sources: IEX Day-Ahead Market prices; Open-Mete
 We declare that this submission is our team's work, that significant AI use is disclosed above, that all data, code and
 research reused are cited, and that we are ready to explain every result.
 
-| Name | Signature | Date |
+| Team | Signature | Date |
 |---|---|---|
-| | | 22 Nov 2026 |
-| | | 22 Nov 2026 |
-| | | 22 Nov 2026 |
+| Team D01 (all members) | /s/ Team D01: typed electronic signature, given with the agreement of every team member | 22 Nov 2026 |
