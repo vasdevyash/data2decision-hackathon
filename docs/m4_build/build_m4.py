@@ -100,11 +100,12 @@ s.append(Paragraph(
 
 s.append(Paragraph("2. The working solution", H))
 s.append(KeepTogether([fig("m4_app.jpg", 168), Paragraph(
-    "Figure 1. The Battery Dispatch Copilot (run: <i>streamlit run app/app.py</i>). Seven pages: <b>Overview</b>; <b>Tomorrow's bid</b> (forecast with "
-    "likely range, the plan, and exchange orders with price limits, downloadable); <b>Day replay</b> (any of 730 past days, any forecaster); <b>Scenario lab</b> "
-    "(compare three battery designs over the test year); <b>Model lab</b> (price error vs money for each forecaster); <b>Risk and validation</b>; and an "
-    "<b>Assistant</b> that answers questions in plain English using a local AI model (Qwen3 on Ollama, so no data leaves the laptop). Sliders for battery size, "
-    "efficiency, wear, fees and rounds re-plan every page instantly.", CAP)]))
+    "Figure 1. The working solution: a live trading-desk simulator (web/index.html; run <i>python3 -m http.server 8600 --directory web</i>). "
+    "It plays any of 730 real days slot by slot, with a day-night clock, the live price, what the battery is doing, a battery gauge, a running money "
+    "ledger (revenue, charging cost, wear, fees, net) and live KPIs (capture rate, spread captured, cycles, energy lost). Users can switch strategy "
+    "(copilot, copy yesterday, fixed timetable, perfect hindsight), change the battery and see it re-plan instantly, click any day on a two-year "
+    "calendar, and download tomorrow's exchange orders with safety price limits. A Streamlit version (app/app.py) adds an AI assistant that "
+    "answers questions on a local model (Qwen3 on Ollama).", CAP)]))
 
 s.append(Paragraph("3. Performance", H))
 rows = [["Plan (10 MW / 20 MWh, ₹1,000 wear)", "Validation year, ₹/day", "Test year, ₹/day", "Share of best (test)", "Per year (test)"]]
