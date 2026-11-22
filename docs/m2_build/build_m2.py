@@ -52,7 +52,7 @@ s.append(plain([
     ["Fixed rule made feasible: 18 MWh spread evenly over 11:00–15:00 and 18:00–22:00",
      "Four hours at 10 MW is 40 MWh, more than the 18 MWh the battery can use"],
     ["Battery starts and ends every day at 10% charge", "Otherwise a schedule could profit from energy it never bought"],
-    ["Cycles counted as full cycles (18 MWh out); base case 2 a day, 1 as a test",
+    ["Cycles counted as full cycles (18 MWh out); base case up to 2 a day (1.5 used on average), 1 as a test",
      "The second cycle adds about ₹19,000 a day after wear; most Indian battery capacity awarded in 2025 was 2-hour, 2-cycle"],
     ["Battery wear: ₹1,000 per MWh (canvas ₹500; range ₹0–1,500 kept)",
      "Benchmark cost ₹0.80 crore per MWh over about 6,000 cycles (our assumption) gives ₹740–1,480"],
@@ -94,15 +94,15 @@ s.append(bul("<b>Extra profit from the second cycle</b> = profit with 2 cycles �
 s.append(bul("<b>Worst 5% of days</b>, because a trader is judged on bad days too."))
 s.append(KeepTogether([Image(fig2, width=178 * mm, height=54 * mm),
                        Paragraph("Figure 2. Average daily trading profit over the most recent year for each schedule (battery limits and wear identical). "
-                                 "Perfect foresight cannot be traded; it only shows the ceiling. Using yesterday's prices with 2 cycles earns ₹121,401 a day, "
-                                 "₹4.43 crore a year: about 28% of the ₹16 crore benchmark battery cost, a 3.6-year payback before operating costs.", CAP)]))
+                                 "Perfect foresight cannot be traded; it only shows the ceiling. Using yesterday's prices with up to 2 cycles earns ₹121,401 a day, "
+                                 "₹4.43 crore a year, after wear.", CAP)]))
 s.append(P("So the prize for a better forecast is small: at most about ₹9,000 a day over yesterday's prices. The bigger lever is how much to cycle. "
            "Our refined question: <b>how much profit does a forecast-driven schedule add over yesterday's prices and over the fixed rule, and when does a "
            "second daily cycle earn more than its wear</b>, by season, weekday or weekend, and how wide the day's price spread is?"))
 
 s.append(Paragraph("5. Data quality, limitations and preparation", H))
 s.append(bul("<b>Complete:</b> every day has 96 blocks; no gaps, duplicates or blanks. A spot check against the IEX page matched."))
-s.append(bul("<b>Price ceiling:</b> 18.8% of blocks clear at exactly ₹10,000, and about half of the blocks after 6 pm in the most recent year. "
+s.append(bul("<b>Price ceiling:</b> 18.8% of blocks since Apr 2023 clear at exactly ₹10,000 (14.8% of all rows), and about half of the blocks after 6 pm in the most recent year. "
              "The true peak value is hidden, so our profit is a floor. We add a ceiling flag and judge forecast error on the other blocks."))
 s.append(bul("<b>The price level moves:</b> average ₹5,239 in FY24, ₹4,471 in FY25, ₹3,861 in FY26, ₹5,443 so far in FY27. We train from Apr 2023, refit as we go and add season features."))
 s.append(bul("<b>Volume columns are slightly noisy</b> (32 blocks where cleared volume exceeds a bid side; grid cuts in scheduled volume). The price is unaffected."))
@@ -116,7 +116,7 @@ s.append(P("<b>Preparation:</b> reshape to one row per day with 96 prices; build
 s.append(Paragraph("6. Problem–data–KPI fit: proceed", H))
 s.append(P("The data matches the decision exactly: the same market, the same 15-minute blocks, the day before delivery, from an official public source. "
            "Profit needs only the price per block plus the battery settings, and every benchmark above is already computed from this data."))
-s.append(Paragraph("Sources: IEX Day-Ahead Market snapshot; CERC price-ceiling order (April 2023); CERC and APTEL on market coupling (2025–26); "
+s.append(Paragraph("Sources: IEX Day-Ahead Market snapshot (iexindia.com/market-data/day-ahead-market/market-snapshot); CERC price-ceiling order (April 2023); CERC and APTEL on market coupling (2025–26); "
                    "IEEFA–JMK Research on 2025 battery awards; CTUIL benchmark battery cost (2025).", S))
 
 SimpleDocTemplate(out, pagesize=A4, leftMargin=16 * mm, rightMargin=16 * mm, topMargin=12 * mm, bottomMargin=11 * mm,

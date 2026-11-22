@@ -70,7 +70,7 @@ Refresh or change the window with `python src/download_iex_dam.py [YYYY-MM-DD] [
 | `mcp_rs_mwh` | **market clearing price, ₹/MWh: the target** |
 | `congestion` | YES when regional congestion split the market (~2% of blocks) |
 
-Watch out: prices hit regulatory caps (₹20,000 early in 2022, ₹10,000 later; ~19% of blocks sit
+Watch out: prices hit regulatory caps (₹20,000 early in 2022, ₹10,000 later; ~19% of blocks since Apr 2023 (15% of all rows) sit
 at ₹10,000), so the price distribution is clipped at the top.
 
 Other datasets stay local in `data/raw/` and are not pushed.
