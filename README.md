@@ -7,11 +7,26 @@ Team workspace for the Data2Decision Hackathon (November 2026).
 | Phase | Status |
 |---|---|
 | M1 – Decide (problem canvas) | Done |
-| M2 | **Waiting for the problem statement** |
+| M2 | **In progress**: problem statement received |
 
 ## Problem statement (M2)
 
-_To be added once it is released._
+**Battery Dispatch Against Day-Ahead Prices** (Energy & Renewables). Full canvas:
+[`docs/M2_Problem_Statement_Battery_Dispatch.pdf`](docs/M2_Problem_Statement_Battery_Dispatch.pdf)
+
+- **User:** trading head of a grid-scale battery operator who submits tomorrow's schedule to the power exchange.
+- **Decision:** for each 15-minute block of the next day, charge, discharge or idle, and how much.
+- **Primary KPI:** net daily revenue (₹/day) after efficiency losses and degradation cost.
+  Supporting: capture ratio = revenue ÷ perfect-hindsight revenue for the same day.
+- **Question:** how much more does a forecast-driven schedule earn than a fixed daily rule, and in which
+  conditions (season, weekday, volatility) does the edge shrink or vanish?
+- **Battery (assumed):** 10 MW / 20 MWh (2 h), 88% round-trip efficiency, 1–2 full cycles/day,
+  state of charge 10–100%, price-taker.
+- **Degradation cost:** ₹500 per MWh discharged; sensitivity ₹0–₹1,500.
+- **Benchmarks:** (a) fixed rule: charge 11:00–15:00, discharge 18:00–22:00; (b) forecast-based; (c) perfect hindsight.
+- **Data:** IEX day-ahead market clearing price (₹/MWh), 15-minute blocks, from April 2022. If unusable,
+  another public day-ahead series with the same logic; record it in the M2 Data Note.
+- **Out of scope:** transmission charges, taxes, other market segments.
 
 ## Repo layout
 
