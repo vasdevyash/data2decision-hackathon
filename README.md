@@ -91,8 +91,15 @@ pip install -r requirements.txt
 streamlit run app/app.py
 ```
 
-Three tabs: **Tomorrow's bid** (forecast, battery plan, downloadable 96-slot bid), **Replay any day** (any validation or test day,
-our plan vs tomorrow = today vs a perfect guess) and **Track record** (two-year results). Sidebar sliders change battery size,
+Optional local AI assistant (runs on this machine, no API key):
+
+```bash
+ollama serve
+ollama pull qwen3:4b
+```
+
+Seven pages: **Overview**, **Tomorrow's bid** (forecast, plan, exchange orders with price limits), **Day replay**, **Scenario lab** (compare battery designs),
+**Model lab** (price error vs money per forecaster), **Risk and validation**, and **Assistant** (Ollama, falls back to a built-in guide). Sidebar sliders change battery size,
 efficiency, wear cost, fees and rounds per day; the plan re-optimises instantly.
 
 Milestone files: `docs/D01_M2.pdf`, `docs/D01_M3.pdf` + `notebooks/D01_M3_eda.ipynb`, `docs/D01_M4.pdf` + `notebooks/D01_M4_solution.ipynb` + `app/app.py`.

@@ -91,7 +91,7 @@ s.append(table([
      "In M3 each beat <i>tomorrow = today</i>; they make different mistakes, so the blend is steadier. Chronos also gives a likely range, not just one number."],
     ["2. Plan the battery", "A linear-programming optimiser picks how much to buy or sell in each slot to make the most money at the forecast prices.",
      "It finds the exact best plan in about a millisecond and can never break the battery's limits."],
-    ["3. Write the bid", "96 rows of \"buy X MW\" or \"sell Y MW\", downloadable from the app.", "This is what the trader submits to the exchange."],
+    ["3. Write the bid", "Buy and sell orders for each active slot, with price limits taken from the forecast range, downloadable from the app.", "Ready to submit; the limits protect the trader if prices land far from the forecast."],
 ], [30, 92, 58]))
 s.append(Paragraph(
     "<b>The optimiser in one line.</b> Maximise Σ<sub>t</sub> [ price<sub>t</sub> × sold<sub>t</sub> − price<sub>t</sub> × bought<sub>t</sub> − wear × sold<sub>t</sub> ] over the 96 slots, "
@@ -100,9 +100,11 @@ s.append(Paragraph(
 
 s.append(Paragraph("2. The working solution", H))
 s.append(KeepTogether([fig("m4_app.jpg", 168), Paragraph(
-    "Figure 1. The app (run: <i>streamlit run app/app.py</i>). <b>Tomorrow's bid</b>: forecast with likely range, the plan (green buy, red sell) and the "
-    "stored energy, plus a one-click bid file. <b>Replay any day</b>: pick any of 730 past days and compare our plan with <i>tomorrow = today</i> and a "
-    "perfect guess. <b>Track record</b>: two-year results. Sliders change battery size, efficiency, wear cost, fees and rounds, and the plan updates instantly.", CAP)]))
+    "Figure 1. The Battery Dispatch Copilot (run: <i>streamlit run app/app.py</i>). Seven pages: <b>Overview</b>; <b>Tomorrow's bid</b> (forecast with "
+    "likely range, the plan, and exchange orders with price limits, downloadable); <b>Day replay</b> (any of 730 past days, any forecaster); <b>Scenario lab</b> "
+    "(compare three battery designs over the test year); <b>Model lab</b> (price error vs money for each forecaster); <b>Risk and validation</b>; and an "
+    "<b>Assistant</b> that answers questions in plain English using a local AI model (Qwen3 on Ollama, so no data leaves the laptop). Sliders for battery size, "
+    "efficiency, wear, fees and rounds re-plan every page instantly.", CAP)]))
 
 s.append(Paragraph("3. Performance", H))
 rows = [["Plan (10 MW / 20 MWh, ₹1,000 wear)", "Validation year, ₹/day", "Test year, ₹/day", "Share of best (test)", "Per year (test)"]]
