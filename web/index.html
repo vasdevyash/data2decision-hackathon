@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Battery Copilot · Team D01</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="data.js"></script>
+<style>
+  :root { --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --soft:#f8fafc; --blue:#2563eb; --navy:#0f2c59; --green:#059669; --red:#dc2626; --amber:#d97706; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: Inter, system-ui, sans-serif; color: var(--ink); background: #fff; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+  header { position: sticky; top: 0; z-index: 10; background: rgba(255,255,255,0.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+  .bar { display:flex; align-items:center; justify-content:space-between; height: 64px; }
+  .brand { font-weight: 800; font-size: 1.05rem; letter-spacing: -0.01em; }
+  .brand span { color: var(--blue); }
+  nav { display:flex; gap: 6px; }
+  nav button { border: 0; background: transparent; font: inherit; font-weight: 600; color: var(--muted); padding: 9px 16px; border-radius: 999px; cursor: pointer; }
+  nav button.on { background: var(--ink); color: #fff; }
+  nav button:hover:not(.on) { background: var(--soft); color: var(--ink); }
+  section { display:none; padding: 40px 0 64px; } section.on { display:block; }
+  .eyebrow { color: var(--blue); font-weight: 700; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; }
+  h1 { font-size: 2.4rem; line-height: 1.15; margin: 8px 0 12px; letter-spacing: -0.02em; }
+  h2 { font-size: 1.35rem; margin: 36px 0 6px; letter-spacing: -0.01em; }
+  .lede { color: var(--muted); font-size: 1.08rem; max-width: 760px; line-height: 1.6; margin: 0 0 24px; }
+  .grid { display:grid; gap: 16px; } .g4 { grid-template-columns: repeat(4, 1fr); } .g3 { grid-template-columns: repeat(3, 1fr); } .g2 { grid-template-columns: 1fr 1fr; }
+  .card { border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; background: #fff; }
+  .k { color: var(--muted); font-size: .82rem; font-weight: 500; }
+  .v { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em; margin-top: 4px; }
+  .s { font-size: .85rem; font-weight: 600; margin-top: 2px; }
+  .pos { color: var(--green); } .neg { color: var(--red); } .mut { color: var(--muted); }
+  .story { background: var(--soft); border-radius: 16px; padding: 18px 22px; font-size: 1.02rem; line-height: 1.65; margin: 18px 0; border: 1px solid var(--line); }
+  .story b { color: var(--ink); }
+  .chart { border: 1px solid var(--line); border-radius: 16px; padding: 8px; margin-top: 16px; min-height: 340px; }
+  #t_chart, #d_chart { height: 580px; } #r_cum { height: 400px; } #r_month, #r_dow, #h_models, #h_scatter { height: 340px; }
+  .row { display:flex; align-items:center; gap: 14px; flex-wrap: wrap; }
+  .btn { border: 1px solid var(--line); background: #fff; font: inherit; font-weight: 600; padding: 10px 18px; border-radius: 12px; cursor: pointer; }
+  .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .btn:hover { filter: brightness(0.97); }
+  input[type=range] { accent-color: var(--blue); }
+  .day-slider { flex: 1; min-width: 260px; }
+  .daylabel { font-weight: 700; font-size: 1.1rem; min-width: 210px; }
+  .step { display:flex; gap: 14px; }
+  .num { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: #fff; display:grid; place-items:center; font-weight: 700; }
+  .step h3 { margin: 4px 0 6px; font-size: 1.05rem; } .step p { margin: 0; color: var(--muted); line-height: 1.55; }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); } th { color: var(--muted); font-weight: 600; font-size: .8rem; }
+  td.r, th.r { text-align: right; }
+  .settings { margin-top: 18px !important; display:grid; grid-template-columns: repeat(5, 1fr); gap: 18px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--soft); margin: 8px 0 4px; }
+  .settings label { font-size: .8rem; color: var(--muted); font-weight: 600; display:block; margin-bottom: 4px; }
+  .settings output { font-weight: 700; color: var(--ink); }
+  .settings input { width: 100%; }
+  .tip { display:inline-grid; place-items:center; width: 18px; height: 18px; border-radius: 50%; background: var(--line); color: var(--muted); font-size: .7rem; font-weight: 700; cursor: help; margin-left: 6px; }
+  .pill { display:inline-block; padding: 3px 10px; border-radius: 999px; background: #eef2ff; color: var(--navy); font-size: .78rem; font-weight: 700; }
+  .scroll { max-height: 320px; overflow:auto; border: 1px solid var(--line); border-radius: 12px; }
+  footer { border-top: 1px solid var(--line); color: var(--muted); font-size: .82rem; padding: 22px 0 40px; }
+  @media (max-width: 900px) { .g4, .g3, .g2, .settings { grid-template-columns: 1fr 1fr; } h1 { font-size: 1.8rem; } nav button { padding: 8px 10px; } }
+</style>
+</head>
+<body>
+<header><div class="wrap bar">
+  <div class="brand">Battery <span>Copilot</span></div>
+  <nav id="nav">
+    <button data-s="tomorrow" class="on">Tomorrow</button><button data-s="day">Any day</button><button data-s="results">Results</button><button data-s="how">How it works</button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+  <div class="settings" id="settings" title="Change the battery. Every plan on the page updates instantly.">
+    <div><label>Power <output id="o_mw"></output></label><input id="mw" type="range" min="5" max="50" step="5" value="10"></div>
+    <div><label>Hours of storage <output id="o_h"></output></label><input id="h" type="range" min="1" max="4" step="1" value="2"></div>
+    <div><label>Efficiency <output id="o_rte"></output></label><input id="rte" type="range" min="80" max="95" step="1" value="88"></div>
+    <div><label>Wear cost per MWh <output id="o_wear"></output></label><input id="wear" type="range" min="0" max="2000" step="100" value="1000"></div>
+    <div><label>Exchange fee per MWh <output id="o_fee"></output></label><input id="fee" type="range" min="0" max="50" step="5" value="0"></div>
+  </div>
+
+  <!-- TOMORROW -->
+  <section id="tomorrow" class="on">
+    <div class="eyebrow">Tomorrow's plan</div>
+    <h1 id="t_title">What should the battery do tomorrow?</h1>
+    <p class="lede">The copilot guesses tomorrow's electricity price for every 15 minutes, then works out when to <b>buy</b> cheap power and when to <b>sell</b> it dear. Here is its plan, ready to send to the exchange.</p>
+    <div class="grid g4" id="t_cards"></div>
+    <div class="story" id="t_story"></div>
+    <div class="chart" id="t_chart"></div>
+    <h2>Orders to send <span class="tip" title="One order for each 15-minute slot where the battery buys or sells. The price limit stops the order if the real price is much worse than expected.">?</span></h2>
+    <div class="row" style="margin:8px 0 12px"><label class="row" style="gap:8px;font-weight:600"><input type="checkbox" id="guard" checked> Add safety price limits</label>
+      <button class="btn primary" id="dl">Download orders (CSV)</button><span class="mut" id="t_count"></span></div>
+    <div class="scroll"><table id="t_orders"></table></div>
+  </section>
+
+  <!-- ANY DAY -->
+  <section id="day">
+    <div class="eyebrow">Replay any day</div>
+    <h1>How would it have traded on a real day?</h1>
+    <p class="lede">Pick any day from the last two years, or press play. The plan is made from the forecast, then paid at the real prices, and compared with simply copying yesterday.</p>
+    <div class="row"><button class="btn primary" id="play">Play</button><input class="day-slider" id="dayslider" type="range" min="0" value="0"><span class="daylabel" id="daylabel"></span></div>
+    <div class="grid g4" id="d_cards" style="margin-top:18px"></div>
+    <div class="story" id="d_story"></div>
+    <div class="chart" id="d_chart"></div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="results">
+    <div class="eyebrow">Results</div>
+    <h1>Does it really make more money?</h1>
+    <p class="lede">We tested the copilot on a full year it had never seen (22 Nov 2025 to 21 Nov 2026), for a 10 MW / 20 MWh battery, against the simple plans a trader could use today.</p>
+    <div class="grid g4" id="r_cards"></div>
+    <div class="chart" id="r_cum"></div>
+    <div class="grid g2"><div class="chart" id="r_month"></div><div class="chart" id="r_dow"></div></div>
+    <h2>Does it still win if our guesses about the battery are wrong?</h2>
+    <p class="lede" style="margin-bottom:10px">We changed wear cost, fees, battery size and efficiency, and re-ran the whole year each time.</p>
+    <div class="card"><table id="r_stress"></table></div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="eyebrow">How it works</div>
+    <h1>Three simple steps, built on serious maths</h1>
+    <p class="lede">Each morning the copilot does a trader's homework in under a second.</p>
+    <div class="grid g3">
+      <div class="card step"><div class="num">1</div><div><h3>Guess tomorrow's prices</h3><p>Two models make a guess for each of the 96 slots, and we blend them: <b>LEAR</b>, the standard research model for electricity prices (Lago et al., 2021), and <b>Chronos</b>, a deep-learning foundation model from Amazon trained on millions of time series (Ansari et al., 2024). Chronos also gives a likely range.</p></div></div>
+      <div class="card step"><div class="num">2</div><div><h3>Find the best plan</h3><p>An optimiser tries every possible way to fill and empty the battery and keeps the one that earns the most, after losses and wear. It never breaks the battery's limits. On this page it runs live in your browser (dynamic programming); the reported results use the exact linear-programming version.</p></div></div>
+      <div class="card step"><div class="num">3</div><div><h3>Send the orders</h3><p>The plan becomes buy and sell orders for each 15-minute slot, with safety price limits from the likely range, so a surprise price cannot hurt much.</p></div></div>
+    </div>
+    <h2>Why blend two models?</h2>
+    <p class="lede" style="margin-bottom:6px">Being closer on price is not the same as earning more. Chronos misses prices about as much as copying yesterday, yet earns more because it gets the <b>shape</b> of the day right. The blend earns the most.</p>
+    <div class="grid g2"><div class="chart" id="h_models"></div><div class="chart" id="h_scatter"></div></div>
+    <h2>How we know it is not luck</h2>
+    <div class="grid g3" id="h_tests"></div>
+    <h2>The maths, in one line</h2>
+    <div class="story">Maximise &nbsp;<b>Σ price × sold − price × bought − wear × sold</b>&nbsp; over the 96 slots, while stored energy = yesterday's energy + 94% of what is bought − what is sold ÷ 94%, stored energy stays between 10% and 100%, and the battery never moves more than its power limit in 15 minutes.</div>
+  </section>
+</main>
+<footer><div class="wrap">Team D01 · Data2Decision 2026 · Data: Indian Energy Exchange Day-Ahead Market. Forecasts: LEAR ensemble and Chronos-Bolt. All results out of sample.</div></footer>
+
+<script>
+const D = window.DATA, M = D.m4;
+const fmt = x => "₹" + Math.round(x).toLocaleString("en-IN");
+const sgn = x => (x >= 0 ? "+" : "−") + "₹" + Math.abs(Math.round(x)).toLocaleString("en-IN");
+const SLOT = [...Array(96)].map((_, i) => String(Math.floor(i / 4)).padStart(2, "0") + ":" + String(15 * (i % 4)).padStart(2, "0"));
+const X = [...Array(96)].map((_, i) => i / 4);
+const BLUE = "#2563eb", INK = "#0f172a", GREY = "#94a3b8", GREEN = "#059669", RED = "#dc2626", NAVY = "#0f2c59";
+const LAYOUT = { font: { family: "Inter, system-ui, sans-serif", size: 12, color: INK }, paper_bgcolor: "#fff", plot_bgcolor: "#fff",
+  margin: { l: 56, r: 56, t: 70, b: 40 }, hovermode: "x unified", legend: { orientation: "h", y: 1.1, x: 0 },
+  xaxis: { showgrid: false, linecolor: "#e2e8f0" }, yaxis: { gridcolor: "#f1f5f9", zeroline: false } };
+const CFG = { displayModeBar: false, responsive: true };
+
+// ---------------- settings
+const S = () => ({ mw: +mw.value, mwh: +mw.value * +h.value, rte: +rte.value / 100, wear: +wear.value, fee: +fee.value });
+function showSettings() { o_mw.textContent = mw.value + " MW"; o_h.textContent = h.value + " h (" + (+mw.value * +h.value) + " MWh)"; o_rte.textContent = rte.value + "%"; o_wear.textContent = fmt(+wear.value); o_fee.textContent = fmt(+fee.value); }
+
+// ---------------- dynamic-programming planner (exact on a fine storage grid)
+function plan(p, s) {
+  // storage grid chosen so a full-power charge is exactly 20 steps; finer grid = closer to the exact optimum
+  const eta = Math.sqrt(s.rte), smin = 0.1 * s.mwh, step = (eta * s.mw / 4) / 20, N = Math.floor((s.mwh - smin) / step + 1e-9);
+  const kc = 20, kd = Math.floor((s.mw / 4 / eta) / step + 1e-9);
+  const T = 96, NEG = -1e18; let V = new Float64Array(N + 1).fill(NEG); V[0] = 0;
+  const choice = []; for (let t = 0; t < T; t++) choice.push(new Int16Array(N + 1));
+  for (let t = T - 1; t >= 0; t--) {
+    const nv = new Float64Array(N + 1).fill(NEG);
+    for (let i = 0; i <= N; i++) {
+      let best = NEG, bj = 0;
+      for (let j = -Math.min(kd, i); j <= Math.min(kc, N - i); j++) {
+        const nxt = V[i + j]; if (nxt <= NEG / 2) continue;
+        const e = Math.abs(j) * step;
+        const r = j > 0 ? -(p[t] + s.fee) * e / eta : j < 0 ? (p[t] - s.wear - s.fee) * e * eta : 0;
+        if (r + nxt > best) { best = r + nxt; bj = j; }
+      }
+      nv[i] = best; choice[t][i] = bj;
+    }
+    V = nv;
+  }
+  const buy = [], sell = [], soc = []; let i = 0;
+  for (let t = 0; t < T; t++) { const j = choice[t][i], e = Math.abs(j) * step; buy.push(j > 0 ? e / eta : 0); sell.push(j < 0 ? e * eta : 0); i += j; soc.push(smin + i * step); }
+  return { buy, sell, soc };
+}
+function money(pl, p, s) { let m = 0; for (let t = 0; t < 96; t++) m += p[t] * pl.sell[t] - p[t] * pl.buy[t] - s.wear * pl.sell[t] - s.fee * (pl.buy[t] + pl.sell[t]); return m; }
+function windows(arr) { const out = []; let a = -1; for (let t = 0; t <= 96; t++) { const on = t < 96 && arr[t] > 1e-6; if (on && a < 0) a = t; if (!on && a >= 0) { out.push([a, t - 1]); a = -1; } } return out; }
+const wtxt = ws => ws.slice(0, 3).map(([a, b]) => SLOT[a] + "–" + SLOT[Math.min(b + 1, 95)]).join(", ") + (ws.length > 3 ? " and more" : "");
+const avgPrice = (q, p) => { let e = 0, c = 0; for (let t = 0; t < 96; t++) { e += q[t]; c += q[t] * p[t]; } return e ? c / e : 0; };
+
+function card(k, v, s, cls) { return `<div class="card"><div class="k">${k}</div><div class="v">${v}</div>${s ? `<div class="s ${cls || "mut"}">${s}</div>` : ""}</div>`; }
+
+function planChart(el, fc, lo, hi, prev, actual, pl, title) {
+  const tr = [];
+  if (lo) { tr.push({ x: X, y: hi, line: { width: 0 }, hoverinfo: "skip", showlegend: false });
+            tr.push({ x: X, y: lo, fill: "tonexty", fillcolor: "rgba(37,99,235,0.12)", line: { width: 0 }, name: "likely range", hoverinfo: "skip" }); }
+  if (prev) tr.push({ x: X, y: prev, name: "copy of yesterday", line: { color: GREY, width: 1.3 } });
+  if (actual) tr.push({ x: X, y: actual, name: "real price", line: { color: INK, width: 2.2 } });
+  tr.push({ x: X, y: fc, name: "copilot forecast", line: { color: BLUE, width: 2.8 } });
+  tr.push({ x: X, y: pl.buy.map(v => v * 4), type: "bar", name: "buy (MW)", marker: { color: GREEN }, xaxis: "x", yaxis: "y2", width: 0.2 });
+  tr.push({ x: X, y: pl.sell.map(v => -v * 4), type: "bar", name: "sell (MW)", marker: { color: RED }, xaxis: "x", yaxis: "y2", width: 0.2 });
+  tr.push({ x: X, y: pl.soc, name: "stored (MWh)", line: { color: NAVY, width: 1.8, dash: "dot" }, yaxis: "y3" });
+  const L = JSON.parse(JSON.stringify(LAYOUT));
+  Object.assign(L, { height: 560, barmode: "relative", margin: { l: 56, r: 56, t: 90, b: 40 }, legend: { orientation: "h", y: 1.07, x: 0 }, title: { text: title, font: { size: 15 }, x: 0.01, y: 0.985 },
+    yaxis: { domain: [0.42, 1], title: "₹ per MWh", gridcolor: "#f1f5f9" }, yaxis2: { domain: [0, 0.34], title: "MW", gridcolor: "#f1f5f9", zeroline: true, zerolinecolor: "#cbd5e1" },
+    yaxis3: { domain: [0, 0.34], overlaying: "y2", side: "right", title: "MWh stored", showgrid: false },
+    xaxis: { tickvals: [0, 3, 6, 9, 12, 15, 18, 21, 24], ticktext: ["00:00", "03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00", "24:00"], showgrid: false, anchor: "y2" } });
+  Plotly.react(el, tr, L, CFG);
+}
+
+// ---------------- TOMORROW
+function renderTomorrow() {
+  const s = S(), B = D.bid, pl = plan(B.fc, s), exp = money(pl, B.fc, s);
+  const date = new Date(B.date + "T00:00"); const dname = date.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  t_title.textContent = "The plan for " + dname;
+  const bw = windows(pl.buy), sw = windows(pl.sell), mb = pl.buy.reduce((a, b) => a + b, 0), ms = pl.sell.reduce((a, b) => a + b, 0);
+  t_cards.innerHTML = card("Expected profit", fmt(exp), "if prices match the forecast", "mut") + card("Buy", mb.toFixed(1) + " MWh", wtxt(bw)) +
+    card("Sell", ms.toFixed(1) + " MWh", wtxt(sw)) + card("Cheapest slot", fmt(Math.min(...B.fc)), "at " + SLOT[B.fc.indexOf(Math.min(...B.fc))]);
+  t_story.innerHTML = `Tomorrow the copilot expects power to be cheapest around <b>${SLOT[B.fc.indexOf(Math.min(...B.fc))]}</b> and dearest around <b>${SLOT[B.fc.indexOf(Math.max(...B.fc))]}</b>. ` +
+    `So it <b>buys</b> at ${wtxt(bw)} (average ${fmt(avgPrice(pl.buy, B.fc))}) and <b>sells</b> at ${wtxt(sw)} (average ${fmt(avgPrice(pl.sell, B.fc))}). ` +
+    `Expected profit: <b>${fmt(exp)}</b>, after battery losses and wear.`;
+  planChart("t_chart", B.fc, B.lo, B.hi, B.today, null, pl, "Forecast for tomorrow and the battery's plan");
+  const rows = []; for (let t = 0; t < 96; t++) {
+    if (pl.buy[t] > 1e-6) rows.push([SLOT[t], t + 1, "BUY", (pl.buy[t] * 4).toFixed(2), guard.checked ? B.hi[t] : "market"]);
+    if (pl.sell[t] > 1e-6) rows.push([SLOT[t], t + 1, "SELL", (pl.sell[t] * 4).toFixed(2), guard.checked ? B.lo[t] : "market"]);
+  }
+  t_orders.innerHTML = "<tr><th>Time</th><th>Block</th><th>Side</th><th class='r'>MW</th><th class='r'>Price limit ₹/MWh</th></tr>" +
+    rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td style="font-weight:700;color:${r[2] == "BUY" ? GREEN : RED}">${r[2]}</td><td class="r">${r[3]}</td><td class="r">${typeof r[4] == "number" ? r[4].toLocaleString("en-IN") : r[4]}</td></tr>`).join("");
+  t_count.textContent = rows.length + " orders";
+  dl.onclick = () => { const csv = "time,block,side,MW,price_limit\n" + rows.map(r => r.join(",")).join("\n"); const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "orders_" + B.date + ".csv"; a.click(); };
+}
+
+// ---------------- ANY DAY
+const ex = D.days.indexOf(M.example_day.date); dayslider.max = D.days.length - 1; dayslider.value = ex >= 0 ? ex : D.days.length - 30;
+function renderDay() {
+  const s = S(), i = +dayslider.value, act = D.actual[i], fc = D.blend[i], prev = D.prev[i];
+  const date = new Date(D.days[i] + "T00:00"); daylabel.textContent = date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+  const pc = plan(fc, s), py = plan(prev, s), pp = plan(act, s);
+  const mc = money(pc, act, s), my = money(py, act, s), mp = money(pp, act, s);
+  d_cards.innerHTML = card("Copilot earned", fmt(mc), sgn(mc - my) + " vs copying yesterday", mc >= my ? "pos" : "neg") + card("Copying yesterday", fmt(my)) +
+    card("Perfect guess (best possible)", fmt(mp)) + card("Share of the best", mp > 0 ? Math.round(100 * mc / mp) + "%" : "–");
+  let miss = 0, mt = 0; for (let t = 0; t < 96; t++) { const e = Math.abs(fc[t] - act[t]); if (e > miss) { miss = e; mt = t; } }
+  const bw = windows(pc.buy), sw = windows(pc.sell);
+  d_story.innerHTML = `On this day the copilot <b>bought</b> at ${wtxt(bw) || "no time"} for an average of <b>${fmt(avgPrice(pc.buy, act))}</b> and <b>sold</b> at ${wtxt(sw) || "no time"} for <b>${fmt(avgPrice(pc.sell, act))}</b>. ` +
+    `It earned <b>${fmt(mc)}</b>, which is <b class="${mc >= my ? "pos" : "neg"}">${sgn(mc - my)}</b> compared with copying yesterday, and ${mp > 0 ? Math.round(100 * mc / mp) : 0}% of the best possible. ` +
+    `Its biggest miss was at <b>${SLOT[mt]}</b>: it expected ${fmt(fc[mt])}, the real price was ${fmt(act[mt])}.`;
+  planChart("d_chart", fc, D.lo[i], D.hi[i], prev, act, pc, "Forecast vs real price, and the plan");
+}
+let timer = null; play.onclick = () => { if (timer) { clearInterval(timer); timer = null; play.textContent = "Play"; return; }
+  play.textContent = "Pause"; timer = setInterval(() => { dayslider.value = (+dayslider.value + 1) % D.days.length; renderDay(); }, 700); };
+
+// ---------------- RESULTS (exact linear-programming results from the notebook)
+function renderResults() {
+  const t = M.test, g = M.tests.test.blend_vs_today_2;
+  r_cards.innerHTML = card("Money per day", fmt(t.blend_2), sgn(g.gain) + " vs copying yesterday", "pos") + card("Money per year", "₹" + (t.blend_2 * 365 / 1e7).toFixed(2) + " crore", "10 MW / 20 MWh battery") +
+    card("Share of the best possible", (100 * M.share_test.blend).toFixed(1) + "%", "a perfect guess = 100%") + card("Months ahead", M.months_positive + " of " + M.months_total, "chance it is luck below 0.1%", "pos");
+  const idx = D.days.map(d => d), cum = (a, b) => { let c = 0; return a.map((v, k) => (c += v - b[k]) / 1e5); };
+  Plotly.react("r_cum", [
+    { x: idx, y: cum(D.res.blend_2, D.res.today_2), name: "Copilot", line: { color: BLUE, width: 2.6 } },
+    { x: idx, y: cum(D.res.fixed, D.res.today_2), name: "Fixed timetable from the brief", line: { color: RED, width: 2 } }],
+    Object.assign(JSON.parse(JSON.stringify(LAYOUT)), { height: 380, title: { text: "Extra money over copying yesterday, adding up (₹ lakh)", font: { size: 15 }, x: 0.01 }, yaxis: { range: [-60, 35], gridcolor: "#f1f5f9" },
+      shapes: [{ type: "rect", xref: "x", yref: "paper", x0: "2025-11-22", x1: D.days[D.days.length - 1], y0: 0, y1: 1, fillcolor: "#eef2ff", opacity: 0.5, line: { width: 0 }, layer: "below" }],
+      annotations: [{ x: "2025-11-22", y: 1, xref: "x", yref: "paper", text: "test year", showarrow: false, xanchor: "left", yanchor: "top", font: { color: "#64748b" } }] }), CFG);
+  Plotly.react("r_month", [{ x: D.monthly.labels, y: D.monthly.values, type: "bar", marker: { color: D.monthly.values.map(v => v >= 0 ? GREEN : RED) } }],
+    Object.assign(JSON.parse(JSON.stringify(LAYOUT)), { height: 320, title: { text: "Extra money per day, each month", font: { size: 14 }, x: 0.01 }, hovermode: "closest" }), CFG);
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  Plotly.react("r_dow", [{ x: days, y: days.map(d => D.dow[d]), type: "bar", marker: { color: days.map(d => D.dow[d] >= 0 ? BLUE : RED) } }],
+    Object.assign(JSON.parse(JSON.stringify(LAYOUT)), { height: 320, title: { text: "Extra money per day, by weekday (test year)", font: { size: 14 }, x: 0.01 }, hovermode: "closest" }), CFG);
+  r_stress.innerHTML = "<tr><th>What we changed</th><th class='r'>Copilot ₹/day</th><th class='r'>Copying yesterday ₹/day</th><th class='r'>Extra</th><th class='r'>Share of best</th></tr>" +
+    M.sensitivity.map(r => `<tr><td>${r.setting}</td><td class="r">${fmt(r["assistant ₹/day"])}</td><td class="r">${fmt(r["tomorrow = today ₹/day"])}</td><td class="r pos">${sgn(r["extra ₹/day"])}</td><td class="r">${(100 * r["share of best"]).toFixed(1)}%</td></tr>`).join("");
+}
+
+// ---------------- HOW
+function renderHow() {
+  const u = D.upgrades.test, L = D.lear_monthly;
+  const names = ["Copy yesterday", "LEAR (research)", "Chronos (AI)", "Blend"], gains = [0, u.ens_1.gain_vs_lag1, u.chr_1.gain_vs_lag1, u.blend_1.gain_vs_lag1];
+  Plotly.react("h_models", [{ x: names, y: gains, type: "bar", marker: { color: [GREY, "#6b8fc2", "#d97706", BLUE] }, text: gains.map(g => g ? sgn(g) : "baseline"), textposition: "outside" }],
+    Object.assign(JSON.parse(JSON.stringify(LAYOUT)), { height: 340, title: { text: "Extra money per day vs copying yesterday (test year)", font: { size: 14 }, x: 0.01 }, hovermode: "closest", yaxis: { range: [0, 3600], gridcolor: "#f1f5f9" } }), CFG);
+  const mae = D.upgrades.mae, earn = [u.blend_1.mean - u.blend_1.gain_vs_lag1, u.ens_1.mean, u.chr_1.mean, u.blend_1.mean];
+  Plotly.react("h_scatter", [{ x: [mae.lag1, mae.ens, mae.chr, mae.blend], y: earn, mode: "markers+text", text: names, textposition: "top center", marker: { size: 16, color: [GREY, "#6b8fc2", "#d97706", BLUE] } }],
+    Object.assign(JSON.parse(JSON.stringify(LAYOUT)), { height: 340, title: { text: "Price error vs money earned", font: { size: 14 }, x: 0.01 }, hovermode: "closest",
+      xaxis: { title: "average price error, ₹/MWh (lower is better)", showgrid: false }, yaxis: { title: "₹ per day", gridcolor: "#f1f5f9" } }), CFG);
+  const tv = M.tests.validate.blend_vs_today_2, tt = M.tests.test.blend_vs_today_2;
+  h_tests.innerHTML = card("Tested on unseen days", "2 years", "the blend was chosen on year one, then frozen for year two") +
+    card("95% range of the extra money", fmt(tt.ci[0]) + " to " + fmt(tt.ci[1]), "per day, test year; resampling whole weeks", "pos") +
+    card("Chance it is luck", "0.06%", "Diebold–Mariano test; validation year " + sgn(tv.gain) + "/day", "pos");
+}
+
+// ---------------- wiring
+document.querySelectorAll("#nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("#nav button").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll("section").forEach(sct => sct.classList.toggle("on", sct.id === b.dataset.s));
+  settings.style.display = (b.dataset.s === "tomorrow" || b.dataset.s === "day") ? "grid" : "none";
+  ({ tomorrow: renderTomorrow, day: renderDay, results: renderResults, how: renderHow })[b.dataset.s]();
+  window.dispatchEvent(new Event("resize"));
+});
+[mw, h, rte, wear, fee].forEach(el => el.oninput = () => { showSettings(); if (tomorrow.classList.contains("on")) renderTomorrow(); if (day.classList.contains("on")) renderDay(); });
+guard.onchange = renderTomorrow; dayslider.oninput = renderDay;
+showSettings(); renderTomorrow();
+</script>
+</body>
+</html>
