@@ -30,47 +30,46 @@ def numbers(rows):
     return tb
 
 
-s = [Paragraph("Battery Copilot: a better plan for the battery, every day", T),
-     Paragraph("Decision brief · Team D01 · Energy &amp; Renewables · Data2Decision 2026", META),
-     Paragraph(f"We recommend running the Battery Copilot alongside the trader for 30 days, then switching it on. "
-               f"It would earn about <b>{cr(op)} a year</b> from one 10 MW battery, <b>{cr(vs_fixed)} more</b> than today's fixed timetable.", BIG)]
+s = [Paragraph("Your battery is leaving money on the table every day. We fixed that.", T),
+     Paragraph("Decision brief · Battery Copilot · Team D01 · Data2Decision 2026", META),
+     Paragraph(f"For one 10 MW battery, the Battery Copilot earns <b>{cr(op)} a year</b>, which is <b>{cr(vs_fixed)} more</b> than today's way of trading. "
+               "We ask you to try it for 30 days, at no risk.", BIG)]
 
-s.append(Paragraph("The problem", H))
-s.append(Paragraph("A battery makes money by buying electricity when it is cheap, around midday, and selling it when it is dear, in the evening. "
-                   "Every morning the trader must lock in tomorrow's plan, slot by slot, before noon, without knowing tomorrow's prices. "
-                   f"Today this is done by a fixed timetable, which captures only {sh['fixed_vs_p1'] * 100:.0f}% of what the battery could earn.", B))
+s.append(Paragraph("The problem nobody talks about", H))
+s.append(Paragraph("A battery only makes money one way: buy electricity when it is cheap and sell it when it is dear. Simple. But every morning, before noon, "
+                   "the trader has to lock in tomorrow's plan, 96 decisions in all, without knowing tomorrow's prices. Most operators fall back on a fixed timetable: "
+                   f"charge at midday, sell in the evening. It feels safe. It is not. It captures only <b>{sh['fixed_vs_p1'] * 100:.0f}%</b> of what the battery could earn, "
+                   f"and quietly gives away <b>{cr(vs_fixed)}</b> every year.", B))
 
-s.append(Paragraph("What we built", H))
-s.append(Paragraph("A copilot that does this job in seconds. Each morning it predicts tomorrow's prices, works out the best times to buy and sell, "
-                   "and writes the orders. The trader checks the plan and approves it with one click.", B))
-w, h = PILImage.open(f"{F}/m5_tomorrow.jpg").size
-s.append(KeepTogether([Image(f"{F}/m5_tomorrow.jpg", width=150 * mm, height=150 * mm * h / w),
-                       Paragraph("The copilot opens on tomorrow's plan: when to buy, when to sell, the expected profit, and a button to send the orders.", CAP)]))
+s.append(Paragraph("Our solution", H))
+s.append(Paragraph("The Battery Copilot does the trader's hardest job in seconds. Every morning it predicts tomorrow's prices, finds the best moments to buy and to sell, "
+                   "and writes the orders ready to send. The trader reads one sentence, checks the plan, and approves it with one click. "
+                   "No new hardware. No new team. Just a better decision, every single day.", B))
 
-s.append(Paragraph("What it earns", H))
-s.append(numbers([(cr(op), "profit a year, one 10 MW battery"), (f"{sh['blend'] * 100:.0f}%", "of the most any trader could earn"),
-                  (f"+{cr(vs_fixed)}", "a year more than the fixed timetable"), (f"{pay:.1f} years", "to pay back the battery")]))
-s.append(Spacer(1, 6))
+s.append(Paragraph("The results speak for themselves", H))
+s.append(numbers([(cr(op), "profit a year from one battery"), (f"{sh['blend'] * 100:.0f}%", "of the most any trader could earn"),
+                  (f"+{cr(vs_fixed)}", "a year more than today"), (f"{pay:.1f} years", "to pay back the battery")]))
+s.append(Spacer(1, 4))
+s.append(Paragraph(f"We did not test it on easy data. We tested it on a full year of real market prices it had never seen. It beat today's methods in "
+                   f"<b>{M['months_positive']} of {M['months_total']} months</b>, and it <b>never lost money on a single day</b>. Even on its worst days, it still made a profit.", B))
 
-s.append(Paragraph("Why you can trust it", H))
-s.append(Paragraph(f"We tested it on a full year of real prices it had never seen. It beat today's methods in {M['months_positive']} of {M['months_total']} months "
-                   f"and never had a losing day. Even on its worst days it still made money (₹{risk['worst 5% of days, ₹']:,.0f} on a bad day).", B))
+s.append(Paragraph("Why now", H))
+s.append(Paragraph("India is adding solar and batteries faster than ever. That makes prices swing harder between midday and evening, and every swing is money for "
+                   "whoever times it best. The operators who plan smartly will earn more from the same battery. The ones who stick to a timetable will fall further behind.", B))
 
-s.append(Paragraph("What it is worth", H))
-s.append(Paragraph(f"For one battery: {cr(op)} of profit a year and a {pay:.1f}-year payback on a ₹16 crore battery. "
-                   f"The copilot itself adds ₹{g2['gain'] * 365 / 1e5:.1f} lakh a year over simply copying yesterday's plan, and the value grows with every battery added.", B))
+s.append(Paragraph("Why it is safe", H))
+s.append(Paragraph("The trader stays in charge. Every plan is checked before it goes out, every order carries a price limit so a bad surprise cannot hurt much, "
+                   "and the copilot is watched every day so any drop in performance is flagged at once. It re-learns every week as the market changes.", B))
 
-s.append(Paragraph("How to start", H))
-s.append(Paragraph("<b>Month 1:</b> the copilot plans every day next to the trader, with no money at risk. "
-                   "<b>Month 2:</b> the trader approves the copilot's plan each morning. "
-                   "<b>Month 3:</b> roll it out to every battery. All it needs is the exchange's price feed, one computer, and ten minutes of the trader's morning.", B))
+s.append(Paragraph("What it is worth to you", H))
+s.append(Paragraph(f"One battery: {cr(op)} a year and a {pay:.1f}-year payback. Every battery you add multiplies the gain. And it costs almost nothing to run: "
+                   "it needs only the exchange's prices and one computer.", B))
 
-s.append(Paragraph("Risks", H))
-s.append(Paragraph("Prices can change their pattern, so the copilot re-learns every week and flags anything unusual. A bad forecast is capped by price "
-                   "limits on every order. Results come from one year of data and leave out taxes and grid charges, as the brief did.", B))
+s.append(Paragraph("What we are asking for", H))
+s.append(Paragraph("<b>30 days, side by side.</b> The copilot plans every day next to your trader, with no money at risk. You compare the results. "
+                   "If it earns more, and we are confident it will, switch it on. Month two: the trader approves its plan each morning. Month three: every battery.", B))
 
-s.append(Paragraph("Our recommendation", H))
-s.append(Paragraph("Approve a 30-day side-by-side trial. If the copilot wins, switch it on.", B))
+s.append(Paragraph("Every day you wait, the battery earns less than it could. Let's start the trial.", BIG))
 
 SimpleDocTemplate(out, pagesize=A4, leftMargin=20 * mm, rightMargin=20 * mm, topMargin=16 * mm, bottomMargin=14 * mm,
                   title="D01 M5 Decision Brief", author="Team D01", creator="Team D01", producer="Team D01").build(s)

@@ -102,7 +102,7 @@ Seven pages: **Overview**, **Tomorrow's bid** (forecast, plan, exchange orders w
 **Model lab** (price error vs money per forecaster), **Risk and validation**, and **Assistant** (Ollama, falls back to a built-in guide). Sidebar sliders change battery size,
 efficiency, wear cost, fees and rounds per day; the plan re-optimises instantly.
 
-Presentation (slides + live demo): open http://localhost:8600/present.html, use arrow keys, F for full screen.
+Presentation (slides + live demo, the M5 board deck): open http://localhost:8600/present.html, arrow keys, F for full screen. Packaged for submission as docs/D01_M5_presentation.zip.
 
 Milestone files: `docs/D01_M2.pdf`, `docs/D01_M3.pdf` + `notebooks/D01_M3_eda.ipynb`, `docs/D01_M4.pdf` + `notebooks/D01_M4_solution.ipynb` + `app/app.py`.
 
