@@ -126,6 +126,10 @@ details summary { cursor:pointer; list-style:none; } details summary::-webkit-de
 .ok { background:#10b981; } .warn { background:#f59e0b; } .bad { background:#ef4444; }
 .pnl td { padding:8px 6px; } .pnl tr.tot td { font-weight:800; border-top:2px solid var(--ink); }
 .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:.78rem; font-weight:700; } .b-ok { background:#d1fae5; color:#047857; } .b-rev { background:#fee2e2; color:#b91c1c; }
+/* minimal mode: titles, numbers, charts and one-line outcomes only */
+.pline, .how, section:not(#tmr) > .lede, .flow, #daycases + .top .pline { display:none !important; }
+.panel .ptitle { margin-bottom:8px; }
+.panel:has(.flow) { display:none !important; } .g2:has(.flow) { grid-template-columns:1fr !important; }
 .fade { animation: fade .35s ease; } @keyframes fade { from { opacity:.3; } to { opacity:1; } }
 @media (max-width:1100px) { .money { grid-template-columns:1fr 1fr; } .top, .g2, .g3 { grid-template-columns:1fr; } .kpis { grid-template-columns: repeat(3,1fr); } .how { grid-template-columns:1fr 1fr; } }
 </style>
@@ -133,7 +137,7 @@ details summary { cursor:pointer; list-style:none; } details summary::-webkit-de
 <body>
 <header><div class="hbar">
   <div class="brand">Battery <span>Copilot</span></div>
-  <nav class="tabs" id="tabs"><button data-t="tmr" class="on">Tomorrow's plan</button><button data-t="replay">Replay a day</button><button data-t="proof">Proof</button><button data-t="biz">Business case</button><button data-t="audit">Audit &amp; monitoring</button><button data-t="iex">IEX</button></nav>
+  <nav class="tabs" id="tabs"><button data-t="tmr" class="on">1 · Tomorrow's plan</button><button data-t="replay">2 · Watch a real day</button><button data-t="biz">3 · Money it makes</button><button data-t="proof">4 · Proof</button><button data-t="audit">5 · Health check</button><button data-t="iex">6 · IEX</button></nav>
   <div class="spacer"></div>
   <button class="btn" id="openset">Battery settings</button>
 </div></header>
@@ -292,10 +296,11 @@ details summary { cursor:pointer; list-style:none; } details summary::-webkit-de
           <div class="iexplain" id="iex_explain"></div>
         </div>
       </div>
+      <div class="mut" style="margin-top:4px;font-size:.78rem">Curve shapes are illustrative; bid totals, matched volume and clearing price are real IEX figures.</div>
     </div>
     <div class="panel" style="margin-bottom:14px">
       <div class="ptitle">The whole day, slot by slot</div>
-      <div class="pline" id="iex_daysum"></div>
+      <div class="mut" id="iex_daysum" style="margin:2px 0 6px;font-size:.88rem"></div>
       <div class="keys"><span style="--c:#10b981">Battery buys (charges)</span><span style="--c:#ef4444">Battery sells (discharges)</span><span style="--c:#cbd5e1">Battery waits</span></div>
       <div id="chart_iex_day" style="height:300px"></div>
       <div class="row" style="margin-top:10px"><button class="btn primary" id="iex_go">See tomorrow's plan</button><span class="mut">The copilot does this every day, but with forecast prices instead of the real ones.</span></div>
