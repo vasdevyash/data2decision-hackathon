@@ -39,7 +39,7 @@ def plain(rows, widths):
 
 
 s = [Paragraph("M2 FIND · Data Note: Battery Dispatch Against Day-Ahead Prices", T),
-     Paragraph("Team D01 · Energy &amp; Renewables · Data and code: github.com/vasdevyash/data2decision-hackathon", SUB)]
+     Paragraph("Team D01 · Energy &amp; Renewables · Dataset: <link href=\"https://github.com/vasdevyash/data2decision-hackathon/blob/main/data/raw/iex_dam_15min.csv\"><u>data/raw/iex_dam_15min.csv</u></link> · Code and documents: <link href=\"https://github.com/vasdevyash/data2decision-hackathon\"><u>github.com/vasdevyash/data2decision-hackathon</u></link>", SUB)]
 
 s.append(Paragraph("1. The problem we received, and how we sharpened it", H))
 s.append(P("<b>Received:</b> help the trading head of a battery storage operator decide when to charge and discharge a 20 MWh battery each day "
@@ -54,10 +54,10 @@ s.append(plain([
     ["KPI: from net daily revenue to <b>daily trading profit</b> = sales − cost of the electricity bought to charge − battery wear",
      "Revenue ignores what charging costs. Profit is what the trading head is judged on."],
     ["New benchmark: a schedule optimised on <b>yesterday's prices</b>", "A one-line rule already earns 93–95% of the perfect-foresight profit, so it is the honest bar; the fixed rule earns only 70%"],
-    ["Fixed rule made feasible: 18 MWh spread evenly over 11:00–15:00 and 18:00–22:00",
+    ["Fixed rule made feasible: 18 MWh stored, spread evenly over 11:00–15:00 and 18:00–22:00",
      "Four hours at 10 MW is 40 MWh, more than the 18 MWh the battery can use"],
     ["Battery starts and ends every day at 10% charge", "Otherwise a schedule could profit from energy it never bought"],
-    ["Cycles counted as full cycles (18 MWh out); base case up to 2 a day (1.5 used on average), 1 as a test",
+    ["Cycles counted as full cycles (18 MWh drawn from the battery); base case up to 2 a day (1.5 used on average), 1 as a test",
      "The second cycle adds about ₹19,000 a day after wear; most Indian battery capacity awarded in 2025 was 2-hour, 2-cycle"],
     ["Battery wear: ₹1,000 per MWh (canvas ₹500; range ₹0–1,500 kept)",
      "Benchmark cost ₹0.80 crore per MWh over about 6,000 cycles (our assumption) gives ₹740–1,480"],
@@ -68,7 +68,7 @@ s.append(plain([
 ], [92, 86]))
 
 s.append(Paragraph("3. The data", H))
-s.append(P("<b>IEX Day-Ahead Market prices, 15-minute blocks</b>, published by the Indian Energy Exchange on its public market snapshot page. "
+s.append(P("<b>IEX Day-Ahead Market prices, 15-minute blocks</b>, published by the Indian Energy Exchange on its public <link href=\"https://www.iexindia.com/market-data/day-ahead-market/market-snapshot\"><u>market snapshot page</u></link>. "
            "These are real auction results, downloaded on 22 Nov 2026 with a script in the repository so anyone can reproduce them. "
            "162,816 rows (1 Apr 2022 – 21 Nov 2026: 1,696 days × 96 blocks), 10 columns, 14.7 MB. One row is one 15-minute block of the all-India market. "
            "We model 127,776 rows from 1 Apr 2023."))
@@ -94,7 +94,7 @@ s.append(bul("<b>Primary: daily trading profit (₹ per day)</b> = sales − cos
              "because the schedule cannot change them."))
 s.append(bul("<b>Profit added by forecasting</b> = profit of our schedule − profit of the yesterday's-prices schedule. This is the bar our model must clear."))
 s.append(bul("<b>Share of the profit gap closed</b> between the yesterday's-prices schedule and perfect foresight, over the whole test year."))
-s.append(bul("<b>Extra profit from the second cycle</b> = profit with 2 cycles − profit with 1, after wear. A second cycle pays only if this is positive "
+s.append(bul("<b>Extra profit from the second cycle</b> = profit with up to 2 cycles − profit with 1, after wear. A second cycle pays only if this is positive "
              "(about ₹19,000 a day using yesterday's prices)."))
 s.append(bul("<b>Worst 5% of days</b>, because a trader is judged on bad days too."))
 s.append(KeepTogether([Image(fig2, width=168 * mm, height=51 * mm),
@@ -108,11 +108,11 @@ s.append(P("So the prize for a better forecast is small: at most about ₹9,000 
 s.append(Paragraph("5. Data quality, limitations and preparation", H))
 s.append(bul("<b>Complete:</b> every day has 96 blocks; no gaps, duplicates or blanks. A spot check against the IEX page matched."))
 s.append(bul("<b>Price ceiling:</b> 18.8% of blocks since Apr 2023 clear at exactly ₹10,000 (14.8% of all rows), and about half of the blocks after 6 pm in the most recent year. "
-             "The true peak value is hidden, so our profit is a floor. We add a ceiling flag and judge forecast error on the other blocks."))
+             "We still earn the actual settlement price, but the ceiling hides how scarce power was above ₹10,000, so a model cannot learn those levels. We add a ceiling flag and judge forecast error on the other blocks."))
 s.append(bul("<b>The price level moves:</b> average ₹5,239 in FY24, ₹4,471 in FY25, ₹3,861 in FY26, ₹5,443 so far in FY27. We train from Apr 2023, refit as we go and add season features."))
 s.append(bul("<b>Volume columns are slightly noisy</b> (32 blocks where cleared volume exceeds a bid side; grid cuts in scheduled volume). The price is unaffected."))
-s.append(bul("<b>Very low prices are real:</b> 253 blocks at ₹100 or less, all between 8 am and 4 pm, when solar output is high. We keep them; they are the best blocks to charge in."))
-s.append(bul("<b>Limits:</b> all-India price, not regional (congestion in 2% of blocks); the battery is 0.13% of typical traded volume (3% in the thinnest block); "
+s.append(bul("<b>Very low prices are real:</b> 253 blocks at ₹100 or less since Apr 2023, all between 8 am and 4 pm, when solar output is high. We keep them; they are the best blocks to charge in."))
+s.append(bul("<b>Limits:</b> all-India price, not regional (congestion in 2.5% of blocks since Apr 2023); the battery is 0.13% of typical traded volume (3% in the thinnest block); "
              "CERC has ordered market coupling, which may change how prices form; transmission charges and taxes are left out, as in the canvas."))
 s.append(P("<b>Preparation:</b> reshape to one row per day with 96 prices; build features from earlier days (same block 1 and 7 days back, rolling averages, "
            "previous-day volumes) plus block, weekday, month and holidays; split by date; optimise each day as a linear program, already working in the repository. "

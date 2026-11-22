@@ -17,7 +17,7 @@ ax.set_xlim(0, 24); ax.set_ylim(0, 11000); ax.set_xticks(range(0, 25, 3)); ax.se
 ax.set_ylabel("₹ per MWh"); ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:,.0f}"))
 fig.tight_layout(); fig.savefig(f"{out}/fig1.png", dpi=250)
 # Values from src/dispatch_lp.py, test year 22 Nov 2025 - 21 Nov 2026, wear Rs 1,000/MWh
-labs = ["Fixed rule (1 cycle)", "Yesterday's prices (1 cycle)", "Yesterday's prices (2 cycles)", "Perfect foresight (1 cycle)", "Perfect foresight (2 cycles)"]
+labs = ["Fixed rule (1 cycle)", "Yesterday's prices (1 cycle)", "Yesterday's prices (up to 2 cycles)", "Perfect foresight (1 cycle)", "Perfect foresight (up to 2 cycles)"]
 vals = [75091, 102110, 121401, 107757, 130354]
 fig, ax = plt.subplots(figsize=(6.6, 2.0)); y = np.arange(5)[::-1]
 ax.barh(y, [v / 1000 for v in vals], color=["0.75", "0.4", "0.4", "0.86", "0.86"], height=0.62, lw=0)
