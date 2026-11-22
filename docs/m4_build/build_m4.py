@@ -62,7 +62,7 @@ def lakh(x): return f"₹{x / 1e5:.2f} lakh"
 def crore(x): return f"₹{x * 365 / 1e7:.2f} crore"
 
 s = [Paragraph("M4 Build: A Battery Trading Assistant That Writes Tomorrow's Bid", T),
-     Paragraph(f"Team D01 · Energy &amp; Renewables · Code, app and data: {REPO} (app/app.py, notebooks/D01_M4_solution.ipynb)", META)]
+     Paragraph(f"Team D01 · Energy &amp; Renewables · Code, app and data: {REPO} (web/index.html, app/app.py, notebooks/D01_M4_solution.ipynb)", META)]
 s.append(Paragraph(
     "We built an assistant that does the battery trader's daily job. Each morning it guesses tomorrow's price for all 96 fifteen-minute slots, works "
     "out the most profitable plan (when to buy, when to sell, how much), and writes the bid, ready to submit. It runs as a live app, and every number "
@@ -101,11 +101,11 @@ s.append(Paragraph(
 s.append(Paragraph("2. The working solution", H))
 s.append(KeepTogether([fig("m4_app.jpg", 168), Paragraph(
     "Figure 1. The working solution: a live trading-desk simulator (web/index.html; run <i>python3 -m http.server 8600 --directory web</i>). "
-    "It plays any of 730 real days slot by slot, with a day-night clock, the live price, what the battery is doing, a battery gauge, a running money "
-    "ledger (revenue, charging cost, wear, fees, net) and live KPIs (capture rate, spread captured, cycles, energy lost). Users can switch strategy "
-    "(copilot, copy yesterday, fixed timetable, perfect hindsight), change the battery and see it re-plan instantly, click any day on a two-year "
-    "calendar, and download tomorrow's exchange orders with safety price limits. A Streamlit version (app/app.py) adds an AI assistant that "
-    "answers questions on a local model (Qwen3 on Ollama).", CAP)]))
+    "Money comes first: net profit for the day, the extra over copying yesterday, revenue, costs and the proven test-year figure. One-click test cases "
+    "load typical and extreme days (winter double peak, summer heatwave, monsoon, Sunday, holiday, price at the cap all day, best and worst day) and "
+    "battery designs (5 MW / 1 h to 50 MW / 4 h, high wear, high efficiency). Press play to watch the day trade slot by slot, with a day-night clock, "
+    "live price, battery gauge, running money ledger and live KPIs; every chart states its outcome in one line. Tomorrow's mode writes exchange orders "
+    "with safety price limits. A Streamlit version (app/app.py) adds an AI assistant on a local model (Qwen3 on Ollama).", CAP)]))
 
 s.append(Paragraph("3. Performance", H))
 rows = [["Plan (10 MW / 20 MWh, ₹1,000 wear)", "Validation year, ₹/day", "Test year, ₹/day", "Share of best (test)", "Per year (test)"]]
