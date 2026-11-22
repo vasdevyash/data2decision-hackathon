@@ -268,13 +268,13 @@ function renderResults() {
 // ---------------- HOW
 function renderHow() {
   const u = D.upgrades.test, L = D.lear_monthly;
-  const names = ["Copy yesterday", "LEAR (research)", "Chronos (AI)", "Blend"], gains = [0, u.ens_1.gain_vs_lag1, u.chr_1.gain_vs_lag1, u.blend_1.gain_vs_lag1];
+  const names = ["Copy yesterday", "LEAR", "Chronos", "Blend"], gains = [0, u.ens_1.gain_vs_lag1, u.chr_1.gain_vs_lag1, u.blend_1.gain_vs_lag1];
   Plotly.react("h_models", [{ x: names, y: gains, type: "bar", marker: { color: [GREY, "#6b8fc2", "#d97706", BLUE] }, text: gains.map(g => g ? sgn(g) : "baseline"), textposition: "outside" }],
-    Object.assign(JSON.parse(JSON.stringify(LAYOUT)), { height: 340, title: { text: "Extra money per day vs copying yesterday (test year)", font: { size: 14 }, x: 0.01 }, hovermode: "closest", yaxis: { range: [0, 3600], gridcolor: "#f1f5f9" } }), CFG);
+    Object.assign(JSON.parse(JSON.stringify(LAYOUT)), { height: 340, title: { text: "Extra money per day vs copying yesterday (test year)", font: { size: 14 }, x: 0.01 }, hovermode: "closest", yaxis: { range: [0, 3600], gridcolor: "#f1f5f9" }, xaxis: { tickangle: 0, showgrid: false } }), CFG);
   const mae = D.upgrades.mae, earn = [u.blend_1.mean - u.blend_1.gain_vs_lag1, u.ens_1.mean, u.chr_1.mean, u.blend_1.mean];
-  Plotly.react("h_scatter", [{ x: [mae.lag1, mae.ens, mae.chr, mae.blend], y: earn, mode: "markers+text", text: names, textposition: "top center", marker: { size: 16, color: [GREY, "#6b8fc2", "#d97706", BLUE] } }],
+  Plotly.react("h_scatter", [{ x: [mae.lag1, mae.ens, mae.chr, mae.blend], y: earn, mode: "markers+text", text: names, textposition: ["bottom center", "bottom center", "bottom center", "top center"], marker: { size: 16, color: [GREY, "#6b8fc2", "#d97706", BLUE] } }],
     Object.assign(JSON.parse(JSON.stringify(LAYOUT)), { height: 340, title: { text: "Price error vs money earned", font: { size: 14 }, x: 0.01 }, hovermode: "closest",
-      xaxis: { title: "average price error, ₹/MWh (lower is better)", showgrid: false }, yaxis: { title: "₹ per day", gridcolor: "#f1f5f9" } }), CFG);
+      xaxis: { title: "average price error, ₹/MWh (lower is better)", showgrid: false, range: [Math.min(mae.lag1, mae.ens, mae.chr, mae.blend) - 45, Math.max(mae.lag1, mae.ens, mae.chr, mae.blend) + 45] }, yaxis: { title: "₹ per day", gridcolor: "#f1f5f9", range: [Math.min(...earn) - 900, Math.max(...earn) + 600] } }), CFG);
   const tv = M.tests.validate.blend_vs_today_2, tt = M.tests.test.blend_vs_today_2;
   h_tests.innerHTML = card("Tested on unseen days", "2 years", "the blend was chosen on year one, then frozen for year two") +
     card("95% range of the extra money", fmt(tt.ci[0]) + " to " + fmt(tt.ci[1]), "per day, test year; resampling whole weeks", "pos") +
