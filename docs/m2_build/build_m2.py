@@ -82,12 +82,16 @@ s.append(KeepTogether([Image(fig1, width=178 * mm, height=62 * mm),
 
 s.append(Paragraph("4. Target and KPIs", H))
 s.append(P("The target variable is tomorrow's price for each of the 96 blocks. The forecast feeds an optimiser that sets the charge and discharge "
-           "quantities, and profit is then counted at the <i>actual</i> prices. The KPIs are all measures of profit:"))
+           "quantities, and profit is then counted at the <i>actual</i> prices. We forecast prices rather than the schedule itself, because the optimiser "
+           "guarantees every schedule respects the battery's power, capacity and charge-level limits; a model that predicts actions directly can produce "
+           "schedules the battery cannot physically follow. The KPIs are all measures of profit:"))
 s.append(bul("<b>Primary: daily trading profit (₹ per day)</b> = sales − cost of charging energy − ₹1,000 per MWh of wear. Fixed costs are left out "
              "because the schedule cannot change them."))
 s.append(bul("<b>Profit added by forecasting</b> = profit of our schedule − profit of the yesterday's-prices schedule. This is the bar our model must clear."))
 s.append(bul("<b>Share of the profit gap closed</b> between the yesterday's-prices schedule and perfect foresight, over the whole test year."))
-s.append(bul("<b>Profit per MWh sold</b>, to show whether a second cycle pays for its wear, and the <b>worst 5% of days</b>, because a trader is judged on bad days too."))
+s.append(bul("<b>Extra profit from the second cycle</b> = profit with 2 cycles − profit with 1, after wear. A second cycle pays only if this is positive "
+             "(about ₹19,000 a day using yesterday's prices)."))
+s.append(bul("<b>Worst 5% of days</b>, because a trader is judged on bad days too."))
 s.append(KeepTogether([Image(fig2, width=178 * mm, height=54 * mm),
                        Paragraph("Figure 2. Average daily trading profit over the most recent year for each schedule (battery limits and wear identical). "
                                  "Perfect foresight cannot be traded; it only shows the ceiling. Using yesterday's prices with 2 cycles earns ₹121,401 a day, "
