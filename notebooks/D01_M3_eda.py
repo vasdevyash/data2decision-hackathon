@@ -1,20 +1,34 @@
 # %% [markdown]
-# # D01 · M3 UNDERSTAND · Exploratory analysis: battery dispatch against IEX day-ahead prices
+# # How should a battery trade electricity? (Team D01, M3)
 #
-# Reproduces every number and figure in `docs/D01_M3.pdf`. Run from the repository root or from `notebooks/`.
+# **The idea in one line.** A big battery makes money like a shop: it **buys electricity when it is cheap** (around noon, when solar
+# power floods the grid) and **sells it when it is expensive** (in the evening). The catch: every day it must tell the power exchange
+# what it will do in each 15-minute slot of **tomorrow**, before it knows tomorrow's prices.
 #
-# **Inputs:** `data/raw/iex_dam_15min.csv` (IEX DAM, M2), `data/processed/weather_daily.csv`
-# (`src/download_weather.py`, Open-Meteo archived forecasts), India public holidays (`holidays` package).
-# **Outputs:** `outputs/figures/m3_*.png`, `outputs/m3_metrics.json`.
+# **Our question.** What is the best way to guess tomorrow, and how much extra money does a better guess make?
 #
-# Splits are time-ordered and fixed in M2: train 1 Apr 2023 – 21 Nov 2024, validate 22 Nov 2024 – 21 Nov 2025,
-# test 22 Nov 2025 – 21 Nov 2026. Any rule chosen here is chosen on **train** only.
+# **What you will see, step by step**
+# 1. Load and check the data
+# 2. When is power cheap, and when is it expensive?
+# 3. How much do simple guesses earn?
+# 4. Where simple guesses fail: Sundays
+# 5. Does the weather help?
+# 6. When is a second buy-sell round in one day worth it?
+# 7. Unusual days
+# 8. Four kinds of days
+# 9. Price "moods" that last for months
+# 10. A forecasting model from research vs the simple guesses
+#
+# Each step starts with **What we ask**, then the code, then **What we see**. All charts are also saved in `outputs/figures/`.
 
 # %%
 import os, sys, json
 from pathlib import Path
 import numpy as np, pandas as pd, duckdb, holidays
-import matplotlib; matplotlib.use("Agg"); import matplotlib.dates
+import matplotlib
+if "ipykernel" not in sys.modules: matplotlib.use("Agg")
+import matplotlib.dates
+from IPython.display import display
 import matplotlib.pyplot as plt
 from matplotlib import font_manager as fm
 from scipy import stats
@@ -35,10 +49,9 @@ plt.rcParams.update({"font.family": FONT, "font.size": 8.5, "axes.spines.top": F
 ACC, GREY, LIGHT = "#1f4e8c", "0.55", "#c9d6e8"
 
 # %% [markdown]
-# ## 1. Preparation and integration in SQL (DuckDB)
-# `sql/m3_prepare.sql` types and flags every block, runs quality checks and builds one row per day joined to
-# weather and holidays.
-
+# ## 1. Load and check the data
+#
+# We join three sources: **IEX prices** (every 15 minutes since April 2023), **weather forecasts** for 13 places in India, and **public holidays**. The cleaning is written in SQL (`sql/m3_prepare.sql`) so anyone can read each step.
 # %%
 con = duckdb.connect()
 hol = pd.DataFrame([(d, n) for y in range(2022, 2027) for d, n in holidays.India(years=y).items()], columns=["d", "name"])
@@ -56,8 +69,9 @@ M["n_days"] = len(days); M["weather_missing_days"] = int(days.solar_midday_wm2.i
 print(len(days), "days;", M["weather_missing_days"], "without weather;", M["holidays_in_window"], "holidays")
 
 # %% [markdown]
-# ## 2. Price structure: when is power cheap, when is it capped?
-
+# ## 2. When is power cheap, and when is it expensive?
+#
+# **What we ask:** at what hours and in which months is power cheap or expensive? The right chart shows how often the price hits the legal maximum of ₹10,000.
 # %%
 hr = blocks.assign(hour=(blocks.block - 1) // 4, month=pd.to_datetime(blocks.d).dt.month)
 mean_mh = hr.pivot_table(index="month", columns="hour", values="price", aggfunc="mean")
@@ -70,7 +84,12 @@ for ax, mat, cmap, title, fmt in [(axs[0], mean_mh / 1000, "Blues", "Average pri
     ax.set_yticks(range(12)); ax.set_yticklabels(["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"], fontsize=7)
     ax.set_xlabel("hour of day"); cb = fig.colorbar(im, ax=ax, fraction=0.04, pad=0.02); cb.ax.tick_params(labelsize=7)
     for s in ax.spines.values(): s.set_visible(False)
-fig.tight_layout(); fig.savefig(FIG / "m3_structure.png", dpi=250); plt.close(fig)
+fig.tight_layout(); fig.savefig(FIG / "m3_structure.png", dpi=250); plt.show()
+
+# %% [markdown]
+# **What we see:** noon is always the cheap time. Evenings are expensive and often hit the ₹10,000 cap (2 out of 3 evenings in August). In winter there is a second expensive spell in the morning, 6–9 am.
+
+# %%
 M["cap_evening_may_pct"] = round(float(cap_mh.loc[5, 18:23].mean()), 0)
 M["cap_evening_aug_pct"] = round(float(cap_mh.loc[8, 18:23].mean()), 0)
 M["midday_min_month"] = int(mean_mh.loc[:, 10:15].mean(axis=1).idxmin()); M["midday_min_price"] = round(float(mean_mh.loc[:, 10:15].mean(axis=1).min()), -1)
@@ -78,9 +97,9 @@ M["midday_max_month"] = int(mean_mh.loc[:, 10:15].mean(axis=1).idxmax()); M["mid
 print({k: M[k] for k in ["cap_evening_may_pct", "cap_evening_aug_pct", "midday_min_month", "midday_min_price", "midday_max_month", "midday_max_price"]})
 
 # %% [markdown]
-# ## 3. Benchmarks, day by day, on every split
-# Each schedule is optimised on its price input and settled at actual prices (₹1,000/MWh wear).
-
+# ## 3. How much do simple guesses earn?
+#
+# **What we ask:** if the battery simply assumes *tomorrow = today*, how much does it earn? We compare it with the fixed timetable from the problem canvas and with a perfect guess (the most anyone could earn). Each plan is run on every day and paid at the real prices.
 # %%
 DEG = 1000.0
 rows = []
@@ -119,9 +138,9 @@ M["bench"] = bench
 print(json.dumps(bench, indent=1))
 
 # %% [markdown]
-# ## 4. Where "yesterday's prices" breaks: the weekly cycle
-# Persistence error and rank agreement by delivery weekday, then a weekday-aware rule chosen on train only.
-
+# ## 4. Where simple guesses fail: Sundays
+#
+# **What we ask:** on which day of the week does *tomorrow = today* go wrong?
 # %%
 DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 unc = ~CAP.values
@@ -161,13 +180,17 @@ capd = pd.Series(M["test_by_dow_lag1_capture"]).reindex(DOW) * 100
 axs[1].bar(x, capd.values, 0.55, color=[GREY if v > 93 else ACC for v in capd.values])
 for xi, v in zip(x, capd.values): axs[1].text(xi, v + 0.4, f"{v:.0f}%", ha="center", fontsize=7)
 axs[1].set_ylim(80, 100); axs[1].set_xticks(x); axs[1].set_xticklabels(DOW); axs[1].set_title("Profit captured, yesterday's prices (test year)")
-fig.tight_layout(); fig.savefig(FIG / "m3_weekday.png", dpi=250); plt.close(fig)
+fig.tight_layout(); fig.savefig(FIG / "m3_weekday.png", dpi=250); plt.show()
 
 # %% [markdown]
-# ## 5. Does the weather explain what persistence misses?
-# Day-over-day change in segment prices regressed on day-over-day change in forecast weather plus
-# weekday-transition dummies. Fitted on train; scored out of sample on validate + test.
+# **What we see:** *tomorrow = today* works well on most days but badly on **Sundays** (84% of the possible profit, against 94–98% on other days), because Sunday looks nothing like Saturday. Simple fix: for Sundays, copy **last Sunday**. Chosen using only the oldest data, it still adds about **₹850 a day** on the two newer years.
 
+# %%
+
+# %% [markdown]
+# ## 5. Does the weather help?
+#
+# **What we ask:** sunnier days should mean cheaper noon power, and hotter evenings dearer evening power. Does the weather forecast explain the day-to-day price changes?
 # %%
 D = days.copy()
 for c in ["midday_price", "evening_price", "solar_midday_wm2", "cloud_midday_pct", "temp_max_c", "temp_evening_c", "wind_kmh", "wind_evening_kmh"]:
@@ -206,11 +229,17 @@ for ax, xc, yc, xl, title in [(axs[0], "d_solar_midday_wm2", "d_midday_price", "
     ax.axhline(0, color="0.8", lw=0.6); ax.axvline(0, color="0.8", lw=0.6)
     ax.set_xlabel(xl); ax.set_title(title); ax.set_ylabel("₹ thousand/MWh")
     ax.set_xlim(D[xc].quantile(0.005), D[xc].quantile(0.995)); ax.set_ylim(-4.5, 4.5)
-fig.tight_layout(); fig.savefig(FIG / "m3_weather.png", dpi=250); plt.close(fig)
+fig.tight_layout(); fig.savefig(FIG / "m3_weather.png", dpi=250); plt.show()
 
 # %% [markdown]
-# ## 6. When does the second cycle pay?
+# **What we see:** almost no link (the dots form a flat cloud). Weather does not explain the day-to-day price moves; the day of the week does. So we will not build the model around weather.
 
+# %%
+
+# %% [markdown]
+# ## 6. When is a second buy-sell round in one day worth it?
+#
+# **What we ask:** the battery can fill and empty itself twice a day. When does the second round earn more than the wear it causes?
 # %%
 R["v2_hind"] = R.hind2 - R.hind1; R["v2_lag1"] = R.lag1_2 - R.lag1_1
 v = R.dropna(subset=["morning_midday_gap"])
@@ -247,11 +276,17 @@ order = [11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; mo = mo.reindex(order)
 axs[1].bar(range(12), mo.values, color=[ACC if x > 0 else "#c0392b" for x in mo.values], width=0.65)
 axs[1].set_xticks(range(12)); axs[1].set_xticklabels(["N", "D", "J", "F", "M", "A", "M", "J", "J", "A", "S", "O"])
 axs[1].set_title("2nd cycle gain, yesterday's prices, test year"); axs[1].set_ylabel("₹ thousand/day")
-fig.tight_layout(); fig.savefig(FIG / "m3_second_cycle.png", dpi=250); plt.close(fig)
+fig.tight_layout(); fig.savefig(FIG / "m3_second_cycle.png", dpi=250); plt.show()
 
 # %% [markdown]
-# ## 7. Anomalies and regime shifts
+# **What we see:** a second round only pays when there is a **morning peak** as well as an evening one. That happens mostly in **winter** (worth ₹38,000 a day in Oct–Feb) and almost never in Mar–Jun.
 
+# %%
+
+# %% [markdown]
+# ## 7. Unusual days
+#
+# **What we ask:** which days look very different from normal, and why?
 # %%
 roll = days.mean_price.rolling(30).mean()
 sp = days.spread; z = (sp - sp.rolling(60, center=True, min_periods=20).median()) / (1.4826 * (sp - sp.rolling(60, center=True, min_periods=20).median()).abs().rolling(60, center=True, min_periods=20).median())
@@ -272,11 +307,9 @@ M["anomalies"]["fixed_worst_day_evening_minus_midday"] = round(float(days.evenin
 print(json.dumps(M["anomalies"], indent=1))
 
 # %% [markdown]
-# ## 8. Variance-stabilised prices and day types (k-means on daily curves)
-# Prices are transformed with the median/MAD-normalised asinh (Uniejewski, Weron & Ziel, 2018), the standard
-# variance-stabilising transform in electricity price forecasting. Each day is a 96-point curve; k-means groups
-# days by shape and level. We then ask how often tomorrow is a different type from today, and what that costs.
-
+# ## 8. Four kinds of days
+#
+# **What we ask:** do days come in a few typical shapes? We let an algorithm (k-means clustering) group days by the shape of their price curve, then check how often tomorrow is the same kind of day as today.
 # %%
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
@@ -336,12 +369,18 @@ tl = [SHORT.get(t, t[:10]) for t in order_t]
 axs[1].set_xticks(range(K)); axs[1].set_xticklabels(tl, fontsize=7, rotation=20); axs[1].set_yticks(range(K)); axs[1].set_yticklabels(tl, fontsize=7)
 axs[1].set_xlabel("type tomorrow"); axs[1].set_ylabel("type today"); axs[1].set_title("Next-day type, % of days")
 for s_ in axs[1].spines.values(): s_.set_visible(False)
-fig.tight_layout(); fig.savefig(FIG / "m3_daytypes.png", dpi=250); plt.close(fig)
+fig.tight_layout(); fig.savefig(FIG / "m3_daytypes.png", dpi=250); plt.show()
+
+# %% [markdown]
+# **What we see:** four kinds of days. "Double peak" days (22% of days, mostly winter) are where the second round makes money. Tomorrow is the same kind of day as today **77% of the time**, which is why *tomorrow = today* is such a strong guess.
+
+# %%
 M["day_type_order"] = order_t
 
 # %% [markdown]
-# ## 9. Structural breaks (PELT changepoint detection, Killick et al. 2012)
-
+# ## 9. Price "moods" that last for months
+#
+# **What we ask:** does the price level shift for long stretches? A changepoint method (PELT) marks the dates where the average level jumps.
 # %%
 import ruptures as rpt
 wkly = days.mean_price.resample("W").mean().dropna()
@@ -358,17 +397,17 @@ for b in bk[:-1]: ax.axvline(wkly.index[b], color="#c0392b", lw=0.7, ls="--")
 for sp_, c in [("2024-11-22", "validate"), ("2025-11-22", "test")]:
     ax.text(pd.Timestamp(sp_), 9.3, c, fontsize=7, color="0.35"); ax.axvline(pd.Timestamp(sp_), color="0.75", lw=0.6)
 ax.set_ylabel("₹ thousand/MWh"); ax.set_ylim(0, 10); ax.set_title("Weekly average price (grey), PELT segments (blue) and breaks (red)")
-fig.tight_layout(); fig.savefig(FIG / "m3_changepoints.png", dpi=250); plt.close(fig)
+fig.tight_layout(); fig.savefig(FIG / "m3_changepoints.png", dpi=250); plt.show()
 
 # %% [markdown]
-# ## 10. The literature's benchmark forecaster: LEAR, scored by trading profit
-# LEAR (Lago et al., 2021): one LASSO-regularised linear model per block on asinh-transformed prices, with
-# all 96 prices from D−1, D−2 and D−7, weekday and holiday dummies and the day-D weather forecast as inputs;
-# the penalty is chosen by AIC (LARS). We recalibrate monthly on an expanding window (the paper recalibrates
-# daily; monthly keeps this notebook fast). Each forecast is turned into a schedule by the same optimiser and
-# settled at actual prices. Significance: Diebold–Mariano test on the daily profit difference with a
-# Newey–West variance (7 lags), plus the week-block bootstrap.
+# **What we see:** five long "moods", from about ₹4,000 to ₹7,000 average. One shift happens in April 2026, inside our test year, so any model must keep re-learning.
 
+# %%
+
+# %% [markdown]
+# ## 10. A forecasting model from research vs the simple guesses
+#
+# **What we ask:** can a proper forecasting model beat *tomorrow = today*? We use **LEAR**, the model that a leading review of electricity price forecasting (Lago et al., 2021) recommends as the standard to beat. It learns from the last few days' prices, the weekday and holidays. We judge it by **money earned**, not just by forecast error.
 # %%
 from sklearn.linear_model import LassoLarsIC
 from sklearn.preprocessing import StandardScaler
@@ -436,8 +475,24 @@ axs[1].barh(range(6)[::-1], np.array(vals) / 1000, color=["#c0392b", "0.7", "0.5
 for yi, v in zip(range(6)[::-1], vals): axs[1].text(v / 1000 + 1.5, yi, f"{v / 1000:.0f}", va="center", fontsize=7)
 axs[1].set_yticks(range(6)[::-1]); axs[1].set_yticklabels(labels, fontsize=7.5); axs[1].set_xlim(0, 155)
 axs[1].set_title("Test year, ₹ thousand/day (≤2 cycles)"); axs[1].tick_params(axis="y", length=0)
-fig.tight_layout(); fig.savefig(FIG / "m3_lear.png", dpi=250); plt.close(fig)
+fig.tight_layout(); fig.savefig(FIG / "m3_lear.png", dpi=250); plt.show()
+
+# %% [markdown]
+# **What we see:** the research model earns about **₹2,500 a day more** than *tomorrow = today*, every month, on both newer years, and a statistical test says this is very unlikely to be luck. Its guesses are also 24% more accurate. Removing the weather from it changes nothing.
+
+# %%
 M["test_ladder_2c"] = {k: round(float(v)) for k, v in zip(labels, vals)}
+
+# %% [markdown]
+# ## What we learned
+#
+# 1. **Don't use the fixed timetable.** Simply assuming *tomorrow = today* earns ₹27,000 a day more.
+# 2. **A research forecasting model (LEAR) adds about ₹2,500 a day more**, reliably.
+# 3. **The biggest lever is the second daily round**, but only on winter double-peak days.
+# 4. **Sundays need special handling.**
+# 5. **Weather does not help** at this level, so we skip it.
+#
+# **Next (M4):** improve the forecaster and decide each day whether to run one round or two.
 
 # %%
 json.dump(M, open(ROOT / "outputs/m3_metrics.json", "w"), indent=1, default=float)

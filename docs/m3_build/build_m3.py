@@ -67,113 +67,106 @@ others_v2 = [tab[t]["v2_hind"] for t in types if t != dbl]
 cps = M["changepoints"]
 REPO = "github.com/vasdevyash/data2decision-hackathon"
 
-s = [Paragraph("M3 Understand: Exploratory Analysis of IEX Day-Ahead Prices", T),
-     Paragraph(f"Team D01 · Energy &amp; Renewables · Code and data: {REPO} (notebooks/D01_M3_eda.ipynb, sql/m3_prepare.sql). "
-               "All figures and numbers are produced by the notebook.", META)]
-
-s.append(Paragraph("Summary", H))
+s = [Paragraph("M3 Understand: How Should a Battery Trade Electricity?", T),
+     Paragraph(f"Team D01 · Energy &amp; Renewables · Code and data: {REPO} (notebooks/D01_M3_eda.ipynb, sql/m3_prepare.sql)", META)]
+s.append(Paragraph("A big battery makes money like a shop: it buys electricity when it is cheap (around noon, when solar floods the grid) and sells it "
+                   "when it is expensive (in the evening). The catch is that it must commit to tomorrow's plan, slot by slot, before it knows tomorrow's "
+                   "prices. We studied 3.5 years of Indian exchange prices to answer one question: <b>what is the best way to guess tomorrow, and how much "
+                   "extra money does a better guess make?</b>", B))
+s.append(Paragraph("What we found", H))
 summary = [
-    f"<b>A forecasting model is worth building.</b> The LEAR model, the benchmark recommended by Lago et al. (2021), earns ₹{n(lt['lear_1']['gain_vs_lag1'])} a day "
-    f"more than copying yesterday's prices on the test year (95% CI ₹{ci(lt['lear_1']['ci'])}; Diebold–Mariano p &lt; 0.001) and captures "
-    f"{pc(lt['lear_1']['capture'])} of perfect-foresight profit. It also does so on the validation year (+₹{n(lv['lear_1']['gain_vs_lag1'])} a day).",
-    f"<b>The second daily cycle is the larger lever, and it is seasonal.</b> On double-peak days ({pc(tab[dbl]['share'], 0)} of days, {pc(tab[dbl]['winter_share'], 0)} "
-    f"of them in Oct–Feb) a second cycle is worth ₹{n(tab[dbl]['v2_hind'])} a day; on other day types ₹{n(min(others_v2))}–{n(max(others_v2))}. In Mar–Jun it earns nothing.",
-    f"<b>Simple rules fail on Sundays.</b> Copying yesterday captures {pc(dow['Sun'], 0)} of the available profit on Sundays against "
-    f"{pc(min(v for k, v in dow.items() if k != 'Sun'), 0)}–{pc(max(dow.values()), 0)} on other days. Copying last Sunday instead adds ₹{n(wt['gain_1c'])} a day.",
-    f"<b>Weather forecasts add nothing once the calendar is modelled.</b> Removing the weather inputs from LEAR leaves profit unchanged "
-    f"(₹{n(lt['lear_nowx_2']['mean'])} vs ₹{n(lt['lear_2']['mean'])} a day on the test year).",
-    f"<b>Prices move between regimes.</b> Changepoint detection finds {len(cps)} regimes with average prices from ₹{n(min(c[2] for c in cps))} to "
-    f"₹{n(max(c[2] for c in cps))}/MWh, including a break in {dt(cps[-1][0])} inside the test year, so any model must be recalibrated regularly.",
+    f"<b>The fixed timetable in the canvas leaves a lot of money on the table.</b> Simply assuming <i>tomorrow = today</i> earns ₹{n(bt['lag1_1'] - bt['fixed'])} "
+    f"a day more on the test year ({pc(bt['cap_lag1_1'], 0)} of the most anyone could earn, against {pc(bt['cap_fixed'], 0)}).",
+    f"<b>A forecasting model from research does even better.</b> LEAR, the standard model recommended by a leading review (Lago et al., 2021), adds "
+    f"₹{n(lt['lear_1']['gain_vs_lag1'])} a day on top, reaching {pc(lt['lear_1']['capture'], 0)}. The gain holds on two separate years and is very unlikely to be luck.",
+    f"<b>The biggest lever is a second buy-sell round each day, but only in winter.</b> On winter days with a morning and an evening peak it is worth "
+    f"₹{n(tab[dbl]['v2_hind'])} a day; in March–June it earns nothing.",
+    f"<b>Sundays break the simple guess.</b> Sunday looks nothing like Saturday, so <i>tomorrow = today</i> gets only {pc(dow['Sun'], 0)} on Sundays. Copying last "
+    f"Sunday instead adds ₹{n(wt['gain_1c'])} a day.",
+    "<b>Weather forecasts do not help.</b> The forecasting model earns the same with or without them, so we leave weather out.",
 ]
 for i, t in enumerate(summary, 1):
     s.append(Paragraph(f"{i}.&nbsp;&nbsp;{t}", NUM))
 
-s.append(Paragraph("1. Data preparation and integration", H))
+s.append(Paragraph("1. The data", H))
 s.append(table([
-    ["Step", "Method", "Result"],
-    ["IEX prices", "Typed and flagged in DuckDB SQL; kept 1 Apr 2023 onward, the single ₹10,000-cap regime",
+    ["Source", "What we did", "Result"],
+    ["IEX prices", "Every 15-minute price since 1 Apr 2023, cleaned in SQL (DuckDB)",
      f"{n(q['days'] * 96)} blocks, {n(q['days'])} days; {n(q['days_not_96_blocks'])} incomplete days, {n(q['duplicate_blocks'])} duplicates, {n(q['null_prices'])} missing"],
-    ["Quality flags", "Price cap, regional congestion, cleared volume above a bid side",
+    ["Quality flags", "Marked prices at the ₹10,000 cap, regional splits and odd volume rows",
      f"{q['capped_share_pct']}% capped, {q['congested_share_pct']}% congested, {n(q['volume_flag_blocks'])} volume flags"],
-    ["Weather", "Open-Meteo archived forecasts: 4 solar hubs, 2 wind hubs, 7 demand centres; daily national indices",
+    ["Weather", "Past weather forecasts for 13 places: solar parks, wind farms, big cities",
      f"1,696 days, {M['weather_missing_days']} missing"],
-    ["Holidays", "India public holidays (holidays library), joined on date", f"{M['holidays_in_window']} holidays"],
-    ["Transform", "Median/MAD-normalised asinh (Uniejewski et al., 2018) to tame price spikes for modelling",
+    ["Holidays", "India public holidays, matched by date", f"{M['holidays_in_window']} holidays"],
+    ["Transform", "Squeezed extreme prices so models are not thrown by spikes (Uniejewski et al., 2018)",
      f"skewness {M['vst']['skew_raw']} to {M['vst']['skew_asinh']}"],
 ], [24, 92, 64]))
 
-s.append(Paragraph("2. Price structure", H))
+s.append(Paragraph("2. When is power cheap, and when is it expensive?", H))
 s.append(KeepTogether([fig("m3_structure.png"), Paragraph(
-    f"Figure 1. Average price and share of blocks at the ₹10,000 cap, by month and hour (Apr 2023 – Nov 2026). Midday is always the cheap window "
-    f"(cheapest in {datetime.date(2000, M['midday_min_month'], 1).strftime('%B')}, ₹{n(M['midday_min_price'])}). Evenings hit the cap "
-    f"{n(M['cap_evening_aug_pct'])}% of the time in August. Winter adds a morning peak at 6–9 am.", CAP)]))
+    f"Figure 1. Left: average price by month and hour. Right: how often the price hits the ₹10,000 cap. Noon is always cheap. Evenings are expensive "
+    f"and hit the cap {n(M['cap_evening_aug_pct'])}% of the time in August. Winter adds a second expensive spell in the morning, 6–9 am.", CAP)]))
 
-s.append(KeepTogether([Paragraph("3. Regimes and day types", H), fig("m3_changepoints.png"), Paragraph(
-    "Figure 2. Weekly average price with regimes found by PELT changepoint detection (Killick et al., 2012). Regimes: " +
+s.append(KeepTogether([Paragraph("3. Price moods and kinds of days", H), fig("m3_changepoints.png"), Paragraph(
+    "Figure 2. Weekly average price. A changepoint method (PELT; Killick et al., 2012) finds five long price moods, including one that starts inside our test year: " +
     "; ".join(f"{dt(a)}–{dt(b)} ₹{n(m)}" for a, b, m in cps) + ".", CAP)]))
 s.append(KeepTogether([fig("m3_daytypes.png"), Paragraph(
-    f"Figure 3. Days clustered by the shape of their 96-block price curve (k-means on asinh prices, k = 4; silhouette favours k = 2, "
-    f"we keep 4 because the types are operationally distinct). Right: how often tomorrow's type follows today's. A type repeats on "
-    f"{pc(1 - dtp['share_type_change'], 0)} of days, which is why yesterday's prices work so well.", CAP)]))
-s.append(table([["Day type", "Share of days", "In Oct–Feb", "Sundays", "2nd-cycle value, ₹/day", "Yesterday's capture"]] +
+    f"Figure 3. Left: the four kinds of day an algorithm finds when it groups days by the shape of their price curve (k-means). Right: how often "
+    f"tomorrow is each kind, given today. Tomorrow is the same kind as today {pc(1 - dtp['share_type_change'], 0)} of the time, which is why "
+    f"<i>tomorrow = today</i> is such a strong guess. The second round pays almost only on double-peak days.", CAP)]))
+s.append(table([["Kind of day", "Share of days", "In Oct–Feb", "Sundays", "Value of 2nd round, ₹/day", "Share captured by tomorrow = today"]] +
                [[t, pc(tab[t]["share"], 0), pc(tab[t]["winter_share"], 0), pc(tab[t]["sunday_share"], 0), n(tab[t]["v2_hind"]), pc(tab[t]["lag1_capture"])]
                 for t in types], [58, 22, 20, 18, 34, 28]))
 
-s.append(Paragraph("4. Where simple rules fail", H))
+s.append(Paragraph("4. Where the simple guess fails", H))
 s.append(KeepTogether([fig("m3_weekday.png"), Paragraph(
-    f"Figure 4. Left: price error when copying yesterday or the same day last week (uncapped blocks). Right: share of perfect-foresight profit "
-    f"captured by the yesterday's-prices schedule, by weekday, test year. Sunday spreads are {pc(an['sunday_spread_vs_weekday'], 0)} of weekday "
-    f"spreads, and all ten most extreme low-spread days since 2023 were Sundays or holidays. A weekday rule chosen on training data (copy last week "
-    f"for Sunday) adds ₹{n(wv['gain_1c'])} a day on validation (95% CI ₹{ci(wv['ci_1c'])}) and ₹{n(wt['gain_1c'])} on test (₹{ci(wt['ci_1c'])}).", CAP)]))
+    f"Figure 4. Left: how far off the guess is when copying yesterday or last week. Right: share of the possible profit that <i>tomorrow = today</i> "
+    f"earns on each weekday. Sunday is the problem: it looks nothing like Saturday, and all ten most unusual days since 2023 were Sundays or holidays. "
+    f"Copying last Sunday for Sundays adds ₹{n(wv['gain_1c'])} a day on the validation year and ₹{n(wt['gain_1c'])} on the test year.", CAP)]))
 qv = sc["v2_by_gap_quintile"]
 s.append(KeepTogether([fig("m3_second_cycle.png"), Paragraph(
-    f"Figure 5. Left: perfect-foresight value of a second cycle against the morning-minus-midday price gap; it rises from ₹{n(qv[0])} to "
-    f"₹{n(qv[-1])} a day from the lowest to the highest fifth of days. Right: gain from allowing a second cycle with yesterday's prices, by month "
-    f"of the test year. The second cycle loses money on {pc(sc['share_days_lag1_2c_worse'], 0)} of test days; its value repeats day to day "
-    f"(correlation {sc['corr_v2_persistence']:.2f}).", CAP)]))
+    f"Figure 5. Left: the bigger the morning peak, the more a second buy-sell round is worth (from ₹{n(qv[0])} to ₹{n(qv[-1])} a day). "
+    f"Right: what the second round adds in each month of the test year. It pays in winter and earns nothing in March–June.", CAP)]))
 
-s.append(Paragraph("5. Benchmarks, including a forecasting model", H))
-s.append(P := Paragraph(
-    "Each schedule is optimised on its price input and settled at actual prices with identical battery limits and ₹1,000/MWh wear. LEAR fits one "
-    "LASSO model per 15-minute block on asinh prices from D−1, D−2 and D−7, weekday and holiday dummies and the day-D weather forecast, recalibrated "
-    "monthly on an expanding window. Confidence intervals resample whole weeks (Künsch, 1989); p-values are Diebold–Mariano tests on daily profit "
-    f"differences (Diebold and Mariano, 1995). LEAR's price error on uncapped blocks is ₹{n(M['lear']['lear']['mae_uncapped'])}/MWh against "
-    f"₹{n(M['lear']['mae_lag1_uncapped'])} for yesterday's prices.", B))
+s.append(Paragraph("5. Simple guesses vs a forecasting model", H))
+s.append(Paragraph(
+    "Every plan is run on every day and paid at the real prices, with the same battery and wear cost. LEAR learns from the last few days' prices, "
+    "the weekday and holidays, with one small model per 15-minute slot. To check that a gain is real and not luck we use two standard tests: resampling "
+    f"whole weeks (Künsch, 1989) and the Diebold–Mariano test (1995). LEAR's guesses are off by ₹{n(M['lear']['lear']['mae_uncapped'])}/MWh on average, "
+    f"against ₹{n(M['lear']['mae_lag1_uncapped'])} for <i>tomorrow = today</i>.", B))
 s.append(KeepTogether([fig("m3_lear.png"), Paragraph(
-    "Figure 6. Left: cumulative profit gained over the yesterday's-prices schedule (up to two cycles) across the validation and test years. "
-    "Right: average daily profit on the test year.", CAP)]))
-rows = [["Schedule", "Validation, ₹/day (capture)", "Test, ₹/day (capture)", "Test gain vs yesterday, ₹/day (95% CI)", "DM p"]]
+    "Figure 6. Left: extra money earned over <i>tomorrow = today</i>, adding up day by day over two years; the research model pulls ahead steadily. "
+    "Right: average money per day on the test year for each plan.", CAP)]))
+rows = [["Plan", "Validation year, ₹/day (share of best)", "Test year, ₹/day (share of best)", "Extra vs tomorrow = today, test (95% range)", "Chance it is luck"]]
 rows += [
-    ["Fixed rule (canvas), 1 cycle", f"{n(bv['fixed'])} ({pc(bv['cap_fixed'])})", f"{n(bt['fixed'])} ({pc(bt['cap_fixed'])})",
+    ["Fixed timetable (canvas), 1 round", f"{n(bv['fixed'])} ({pc(bv['cap_fixed'])})", f"{n(bt['fixed'])} ({pc(bt['cap_fixed'])})",
      f"−{n(bt['lag1_1'] - bt['fixed'])} ({ci([-bt['lag1_vs_fixed_ci'][1], -bt['lag1_vs_fixed_ci'][0]])})", "–"],
-    ["Same day last week, 1 cycle", f"{n(bv['lag7_1'])} ({pc(bv['cap_lag7_1'])})", f"{n(bt['lag7_1'])} ({pc(bt['cap_lag7_1'])})", f"−{n(bt['lag1_1'] - bt['lag7_1'])}", "–"],
-    ["Yesterday's prices, 1 cycle", f"{n(bv['lag1_1'])} ({pc(bv['cap_lag1_1'])})", f"{n(bt['lag1_1'])} ({pc(bt['cap_lag1_1'])})", "reference", "–"],
-    ["<b>LEAR, 1 cycle</b>", f"{n(lv['lear_1']['mean'])} ({pc(lv['lear_1']['capture'])})", f"<b>{n(lt['lear_1']['mean'])}</b> ({pc(lt['lear_1']['capture'])})",
+    ["Same day last week, 1 round", f"{n(bv['lag7_1'])} ({pc(bv['cap_lag7_1'])})", f"{n(bt['lag7_1'])} ({pc(bt['cap_lag7_1'])})", f"−{n(bt['lag1_1'] - bt['lag7_1'])}", "–"],
+    ["Tomorrow = today, 1 round", f"{n(bv['lag1_1'])} ({pc(bv['cap_lag1_1'])})", f"{n(bt['lag1_1'])} ({pc(bt['cap_lag1_1'])})", "reference", "–"],
+    ["<b>LEAR model, 1 round</b>", f"{n(lv['lear_1']['mean'])} ({pc(lv['lear_1']['capture'])})", f"<b>{n(lt['lear_1']['mean'])}</b> ({pc(lt['lear_1']['capture'])})",
      f"+{n(lt['lear_1']['gain_vs_lag1'])} ({ci(lt['lear_1']['ci'])})", pv(lt["lear_1"]["p"])],
-    ["Yesterday's prices, up to 2 cycles", f"{n(bv['lag1_2'])} ({pc(bv['cap_lag1_2'])})", f"{n(bt['lag1_2'])} ({pc(bt['cap_lag1_2'])})", "reference (2 cycles)", "–"],
-    ["Two simple rules, up to 2 cycles", f"{n(cv['mean'])} ({pc(cv['capture'])})", f"{n(ct['mean'])} ({pc(ct['capture'])})", f"+{n(ct['gain_vs_lag1_2'])} ({ci(ct['ci'])})", "–"],
-    ["<b>LEAR, up to 2 cycles</b>", f"{n(lv['lear_2']['mean'])} ({pc(lv['lear_2']['capture'])})", f"<b>{n(lt['lear_2']['mean'])}</b> ({pc(lt['lear_2']['capture'])})",
+    ["Tomorrow = today, up to 2 rounds", f"{n(bv['lag1_2'])} ({pc(bv['cap_lag1_2'])})", f"{n(bt['lag1_2'])} ({pc(bt['cap_lag1_2'])})", "reference (2 cycles)", "–"],
+    ["Sunday fix + smart 2nd round", f"{n(cv['mean'])} ({pc(cv['capture'])})", f"{n(ct['mean'])} ({pc(ct['capture'])})", f"+{n(ct['gain_vs_lag1_2'])} ({ci(ct['ci'])})", "–"],
+    ["<b>LEAR model, up to 2 rounds</b>", f"{n(lv['lear_2']['mean'])} ({pc(lv['lear_2']['capture'])})", f"<b>{n(lt['lear_2']['mean'])}</b> ({pc(lt['lear_2']['capture'])})",
      f"+{n(lt['lear_2']['gain_vs_lag1'])} ({ci(lt['lear_2']['ci'])})", pv(lt["lear_2"]["p"])],
-    ["LEAR without weather, up to 2 cycles", f"{n(lv['lear_nowx_2']['mean'])} ({pc(lv['lear_nowx_2']['capture'])})", f"{n(lt['lear_nowx_2']['mean'])} ({pc(lt['lear_nowx_2']['capture'])})",
+    ["LEAR model without weather, up to 2 rounds", f"{n(lv['lear_nowx_2']['mean'])} ({pc(lv['lear_nowx_2']['capture'])})", f"{n(lt['lear_nowx_2']['mean'])} ({pc(lt['lear_nowx_2']['capture'])})",
      f"+{n(lt['lear_nowx_2']['gain_vs_lag1'])} ({ci(lt['lear_nowx_2']['ci'])})", pv(lt["lear_nowx_2"]["p"])],
-    ["Perfect foresight, 1 / up to 2 cycles (ceiling)", f"{n(bv['hind1'])} / {n(bv['hind2'])}", f"{n(bt['hind1'])} / {n(bt['hind2'])}", "not tradable", "–"],
+    ["Perfect guess, 1 / up to 2 rounds (ceiling)", f"{n(bv['hind1'])} / {n(bv['hind2'])}", f"{n(bt['hind1'])} / {n(bt['hind2'])}", "not tradable", "–"],
 ]
 s.append(table(rows, [52, 33, 31, 47, 17]))
 
 s.append(KeepTogether([fig("m3_weather.png", 170), Paragraph(
-    f"Figure 7. Day-over-day change in midday price against change in forecast solar radiation (left), and in evening price against forecast evening "
-    f"temperature (right). Correlations are {str(round(M['corr_dsolar_dmidday'][0], 2)).replace('-', '−')} and {str(round(M['corr_dtemp_devening'][0], 2)).replace('-', '−')}. Out of sample, calendar terms explain "
-    f"{pc(M['weather']['midday']['r2_oos_calendar_only'], 0)} (midday) and {pc(M['weather']['evening']['r2_oos_calendar_only'], 0)} (evening) of day-to-day price "
-    f"changes; adding weather changes this to {pc(M['weather']['midday']['r2_oos_weather_calendar'], 0)} and {pc(M['weather']['evening']['r2_oos_weather_calendar'], 0)}.", CAP)]))
-s.append(Paragraph("6. Limitations and plan for M4", H))
+    "Figure 7. Day-to-day change in noon price against change in forecast sunshine (left), and in evening price against forecast evening "
+    "temperature (right). The dots form a flat cloud: weather barely moves the price from one day to the next. The day of the week explains "
+    f"{pc(M['weather']['evening']['r2_oos_calendar_only'], 0)} of evening price changes; adding weather adds nothing.", CAP)]))
+s.append(Paragraph("6. Limits, and what we do next (M4)", H))
 lim = [
-    "<b>Data limits.</b> One all-India price (congestion splits 2.5% of blocks); the ₹10,000 cap hides scarcity above it; the weather archive is "
-    "built from the first hours of each forecast run, so it is shorter-lead than a true day-ahead forecast; one test year; exchange fees (about ₹1k a day) excluded.",
-    "<b>Model limits.</b> LEAR is recalibrated monthly here; Lago et al. recalibrate daily and average several calibration windows, which typically helps.",
-    "<b>M4 method.</b> (a) LEAR with daily recalibration and window averaging as the main model; (b) decision-focused training, which fits the forecaster "
-    "to the profit of the schedule it produces rather than to price error (Elmachtoub and Grigas, 2022; Sang et al., 2023); (c) a pretrained time-series "
-    "foundation model, Chronos (Ansari et al., 2024), run zero-shot as a challenger; (d) a cycling policy conditioned on the forecast day type. "
-    "All judged by test-year profit with Diebold–Mariano tests against the two simple rules.",
+    "<b>Limits.</b> We use one all-India price. The ₹10,000 cap hides how scarce power really was. Our past weather forecasts are short-range, so "
+    "real day-ahead forecasts would help even less. We test on one year, and exchange fees (about ₹1,000 a day) are left out.",
+    "<b>Next, at M4.</b> (1) Make LEAR re-learn every day instead of every month, as the original paper does. (2) Train the model on the money it "
+    "makes rather than on how close its prices are, an idea called decision-focused learning (Elmachtoub and Grigas, 2022; Sang et al., 2023). "
+    "(3) Try Chronos, a ready-made AI forecasting model trained on many kinds of time series (Ansari et al., 2024), as a challenger. "
+    "(4) Decide each day whether to run one round or two. Every option is judged by money earned on the test year."
 ]
 for t in lim:
     s.append(Paragraph(t, B))
