@@ -3,295 +3,352 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Battery Copilot · Team D01</title>
+<title>Battery Copilot · Live trading desk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script src="data.js"></script>
 <style>
-  :root { --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --soft:#f8fafc; --blue:#2563eb; --navy:#0f2c59; --green:#059669; --red:#dc2626; --amber:#d97706; }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: Inter, system-ui, sans-serif; color: var(--ink); background: #fff; -webkit-font-smoothing: antialiased; }
-  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
-  header { position: sticky; top: 0; z-index: 10; background: rgba(255,255,255,0.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
-  .bar { display:flex; align-items:center; justify-content:space-between; height: 64px; }
-  .brand { font-weight: 800; font-size: 1.05rem; letter-spacing: -0.01em; }
-  .brand span { color: var(--blue); }
-  nav { display:flex; gap: 6px; }
-  nav button { border: 0; background: transparent; font: inherit; font-weight: 600; color: var(--muted); padding: 9px 16px; border-radius: 999px; cursor: pointer; }
-  nav button.on { background: var(--ink); color: #fff; }
-  nav button:hover:not(.on) { background: var(--soft); color: var(--ink); }
-  section { display:none; padding: 40px 0 64px; } section.on { display:block; }
-  .eyebrow { color: var(--blue); font-weight: 700; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; }
-  h1 { font-size: 2.4rem; line-height: 1.15; margin: 8px 0 12px; letter-spacing: -0.02em; }
-  h2 { font-size: 1.35rem; margin: 36px 0 6px; letter-spacing: -0.01em; }
-  .lede { color: var(--muted); font-size: 1.08rem; max-width: 760px; line-height: 1.6; margin: 0 0 24px; }
-  .grid { display:grid; gap: 16px; } .g4 { grid-template-columns: repeat(4, 1fr); } .g3 { grid-template-columns: repeat(3, 1fr); } .g2 { grid-template-columns: 1fr 1fr; }
-  .card { border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; background: #fff; }
-  .k { color: var(--muted); font-size: .82rem; font-weight: 500; }
-  .v { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em; margin-top: 4px; }
-  .s { font-size: .85rem; font-weight: 600; margin-top: 2px; }
-  .pos { color: var(--green); } .neg { color: var(--red); } .mut { color: var(--muted); }
-  .story { background: var(--soft); border-radius: 16px; padding: 18px 22px; font-size: 1.02rem; line-height: 1.65; margin: 18px 0; border: 1px solid var(--line); }
-  .story b { color: var(--ink); }
-  .chart { border: 1px solid var(--line); border-radius: 16px; padding: 8px; margin-top: 16px; min-height: 340px; }
-  #t_chart, #d_chart { height: 580px; } #r_cum { height: 400px; } #r_month, #r_dow, #h_models, #h_scatter { height: 340px; }
-  .row { display:flex; align-items:center; gap: 14px; flex-wrap: wrap; }
-  .btn { border: 1px solid var(--line); background: #fff; font: inherit; font-weight: 600; padding: 10px 18px; border-radius: 12px; cursor: pointer; }
-  .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
-  .btn:hover { filter: brightness(0.97); }
-  input[type=range] { accent-color: var(--blue); }
-  .day-slider { flex: 1; min-width: 260px; }
-  .daylabel { font-weight: 700; font-size: 1.1rem; min-width: 210px; }
-  .step { display:flex; gap: 14px; }
-  .num { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: #fff; display:grid; place-items:center; font-weight: 700; }
-  .step h3 { margin: 4px 0 6px; font-size: 1.05rem; } .step p { margin: 0; color: var(--muted); line-height: 1.55; }
-  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
-  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); } th { color: var(--muted); font-weight: 600; font-size: .8rem; }
-  td.r, th.r { text-align: right; }
-  .settings { margin-top: 18px !important; display:grid; grid-template-columns: repeat(5, 1fr); gap: 18px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--soft); margin: 8px 0 4px; }
-  .settings label { font-size: .8rem; color: var(--muted); font-weight: 600; display:block; margin-bottom: 4px; }
-  .settings output { font-weight: 700; color: var(--ink); }
-  .settings input { width: 100%; }
-  .tip { display:inline-grid; place-items:center; width: 18px; height: 18px; border-radius: 50%; background: var(--line); color: var(--muted); font-size: .7rem; font-weight: 700; cursor: help; margin-left: 6px; }
-  .pill { display:inline-block; padding: 3px 10px; border-radius: 999px; background: #eef2ff; color: var(--navy); font-size: .78rem; font-weight: 700; }
-  .scroll { max-height: 320px; overflow:auto; border: 1px solid var(--line); border-radius: 12px; }
-  footer { border-top: 1px solid var(--line); color: var(--muted); font-size: .82rem; padding: 22px 0 40px; }
-  @media (max-width: 900px) { .g4, .g3, .g2, .settings { grid-template-columns: 1fr 1fr; } h1 { font-size: 1.8rem; } nav button { padding: 8px 10px; } }
+:root { --ink:#0b1220; --muted:#6b7280; --line:#e5e7eb; --soft:#f6f7f9; --blue:#2563eb; --navy:#0f2c59; --green:#10b981; --red:#ef4444; --amber:#f59e0b; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:Inter,system-ui,sans-serif; color:var(--ink); background:var(--soft); -webkit-font-smoothing:antialiased; }
+.mono { font-family:'JetBrains Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums; }
+header { background:#fff; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20; }
+.hbar { max-width:1360px; margin:0 auto; padding:0 20px; height:62px; display:flex; align-items:center; gap:18px; }
+.brand { font-weight:800; font-size:1.05rem; letter-spacing:-.01em; white-space:nowrap; } .brand span { color:var(--blue); }
+.seg { display:flex; background:var(--soft); border:1px solid var(--line); border-radius:12px; padding:3px; }
+.seg button { border:0; background:transparent; font:inherit; font-weight:600; font-size:.9rem; padding:7px 14px; border-radius:9px; color:var(--muted); cursor:pointer; transition:all .2s; }
+.seg button.on { background:#fff; color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.08); }
+.spacer { flex:1; }
+.datebox { display:flex; align-items:center; gap:6px; }
+.datebox button, .ctrl button { border:1px solid var(--line); background:#fff; font:inherit; font-weight:600; border-radius:10px; padding:7px 11px; cursor:pointer; transition:all .15s; }
+.datebox button:hover, .ctrl button:hover { background:var(--soft); }
+.datebox input { font:inherit; border:1px solid var(--line); border-radius:10px; padding:6px 10px; }
+main { max-width:1360px; margin:0 auto; padding:18px 20px 60px; }
+.panel { background:#fff; border:1px solid var(--line); border-radius:18px; padding:16px 18px; }
+.ptitle { font-weight:700; font-size:.98rem; } .pline { color:var(--muted); font-size:.84rem; margin:2px 0 10px; }
+.top { display:grid; grid-template-columns: 1fr 340px; gap:16px; }
+.sky { position:relative; height:150px; border-radius:16px; overflow:hidden; transition: background 0.8s ease; }
+.orb { position:absolute; width:46px; height:46px; border-radius:50%; transform:translate(-50%,-50%); transition: left .35s linear, top .35s linear, background .8s, box-shadow .8s; }
+.skytext { position:absolute; z-index:2; left:20px; top:16px; color:#fff; text-shadow:0 1px 6px rgba(0,0,0,.25); }
+.clock { font-size:2.6rem; font-weight:700; line-height:1; }
+.daylab { font-size:.9rem; opacity:.92; margin-top:6px; font-weight:500; }
+.action { position:absolute; z-index:2; right:18px; bottom:16px; background:rgba(255,255,255,.92); color:var(--ink); padding:9px 14px; border-radius:12px; font-weight:600; font-size:.95rem; box-shadow:0 4px 18px rgba(0,0,0,.12); transition: all .3s; }
+.action .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:8px; vertical-align:middle; }
+.pricechip { position:absolute; right:18px; top:16px; text-align:right; color:#fff; text-shadow:0 1px 6px rgba(0,0,0,.25); }
+.pricechip .p { font-size:1.6rem; font-weight:700; } .pricechip .l { font-size:.78rem; opacity:.9; }
+.ctrl { display:flex; align-items:center; gap:10px; margin:12px 0 4px; }
+.ctrl .play { background:var(--ink); color:#fff; border-color:var(--ink); min-width:92px; } .ctrl .play:hover { background:#1f2937; color:#fff; }
+.ctrl input[type=range] { flex:1; accent-color:var(--blue); }
+.ctrl select { font:inherit; border:1px solid var(--line); border-radius:10px; padding:7px 10px; background:#fff; }
+.batt { display:flex; align-items:center; gap:18px; }
+.cell { position:relative; width:86px; height:170px; border:3px solid var(--ink); border-radius:14px; padding:5px; flex:none; }
+.cell:before { content:""; position:absolute; top:-12px; left:28px; width:24px; height:9px; background:var(--ink); border-radius:4px 4px 0 0; }
+.fill { position:absolute; left:5px; right:5px; bottom:5px; border-radius:8px; transition: height .3s ease, background .4s; }
+.socv { font-size:2rem; font-weight:800; } .stat { display:inline-block; margin-top:6px; padding:4px 10px; border-radius:999px; font-weight:700; font-size:.8rem; transition: all .3s; }
+.ledger { margin-top:14px; border-top:1px solid var(--line); padding-top:10px; }
+.lrow { display:flex; justify-content:space-between; padding:5px 0; font-size:.92rem; }
+.lrow .n { font-weight:600; }
+.net { border-top:1px solid var(--line); margin-top:6px; padding-top:9px; font-size:1.05rem; }
+.net .n { font-size:1.45rem; font-weight:800; }
+.kpis { display:grid; grid-template-columns: repeat(6, 1fr); gap:12px; margin-top:16px; }
+.kpi { background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 14px; transition: transform .2s; }
+.kpi:hover { transform: translateY(-2px); }
+.kpi .k { color:var(--muted); font-size:.76rem; font-weight:600; } .kpi .v { font-size:1.35rem; font-weight:800; margin-top:3px; } .kpi .s { font-size:.76rem; color:var(--muted); margin-top:2px; }
+.g2 { display:grid; grid-template-columns: 1.35fr 1fr; gap:16px; margin-top:16px; }
+.g3 { display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin-top:16px; }
+.chart { width:100%; }
+.pos { color:#059669; } .neg { color:#dc2626; }
+.settings { display:grid; grid-template-columns: 1fr 1fr; gap:12px 18px; }
+.settings label { font-size:.78rem; color:var(--muted); font-weight:600; display:flex; justify-content:space-between; }
+.settings output { color:var(--ink); font-weight:700; }
+.settings input { width:100%; accent-color:var(--blue); }
+table { width:100%; border-collapse:collapse; font-size:.86rem; } th, td { padding:7px 8px; border-bottom:1px solid var(--line); text-align:left; } th { color:var(--muted); font-size:.76rem; font-weight:600; position:sticky; top:0; background:#fff; } td.r, th.r { text-align:right; }
+.scroll { max-height:270px; overflow:auto; }
+.btn { border:1px solid var(--line); background:#fff; font:inherit; font-weight:600; border-radius:10px; padding:8px 14px; cursor:pointer; } .btn.primary { background:var(--blue); color:#fff; border-color:var(--blue); }
+.how { display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; margin-top:16px; }
+.how .n { width:28px; height:28px; border-radius:50%; background:var(--ink); color:#fff; display:grid; place-items:center; font-weight:700; font-size:.85rem; }
+.how h4 { margin:10px 0 4px; font-size:.95rem; } .how p { margin:0; color:var(--muted); font-size:.86rem; line-height:1.5; }
+.fade { animation: fade .35s ease; } @keyframes fade { from { opacity:.3; } to { opacity:1; } }
+@media (max-width:1100px) { .top, .g2, .g3 { grid-template-columns:1fr; } .kpis { grid-template-columns: repeat(3,1fr); } .how { grid-template-columns:1fr 1fr; } }
 </style>
 </head>
 <body>
-<header><div class="wrap bar">
+<header><div class="hbar">
   <div class="brand">Battery <span>Copilot</span></div>
-  <nav id="nav">
-    <button data-s="tomorrow" class="on">Tomorrow</button><button data-s="day">Any day</button><button data-s="results">Results</button><button data-s="how">How it works</button>
-  </nav>
+  <div class="seg" id="mode"><button data-m="replay" class="on">Replay a real day</button><button data-m="tomorrow">Tomorrow's plan</button></div>
+  <div class="spacer"></div>
+  <div class="datebox" id="datebox"><button id="prevd" title="Previous day">‹</button><input type="date" id="datein"><button id="nextd" title="Next day">›</button></div>
 </div></header>
 
-<main class="wrap">
-  <div class="settings" id="settings" title="Change the battery. Every plan on the page updates instantly.">
-    <div><label>Power <output id="o_mw"></output></label><input id="mw" type="range" min="5" max="50" step="5" value="10"></div>
-    <div><label>Hours of storage <output id="o_h"></output></label><input id="h" type="range" min="1" max="4" step="1" value="2"></div>
-    <div><label>Efficiency <output id="o_rte"></output></label><input id="rte" type="range" min="80" max="95" step="1" value="88"></div>
-    <div><label>Wear cost per MWh <output id="o_wear"></output></label><input id="wear" type="range" min="0" max="2000" step="100" value="1000"></div>
-    <div><label>Exchange fee per MWh <output id="o_fee"></output></label><input id="fee" type="range" min="0" max="50" step="5" value="0"></div>
+<main>
+  <div class="top">
+    <div class="panel">
+      <div class="ptitle">Live trading day</div>
+      <div class="pline" id="topline">Press play to watch the battery trade a real day, slot by slot, at real prices.</div>
+      <div class="sky" id="sky">
+        <div class="orb" id="orb"></div>
+        <div class="skytext"><div class="clock mono" id="clock">00:00</div><div class="daylab" id="daylab"></div></div>
+        <div class="pricechip"><div class="p mono" id="nowprice">₹0</div><div class="l" id="nowpl">price now, per MWh</div></div>
+        <div class="action" id="action"><span class="dot"></span>Waiting</div>
+      </div>
+      <div class="ctrl">
+        <button class="play" id="play">Play</button>
+        <input type="range" id="scrub" min="0" max="96" value="0" title="Drag to move through the day">
+        <select id="speed" title="Playback speed"><option value="260">1×</option><option value="110" selected>2×</option><option value="40">5×</option></select>
+        <select id="strat" title="Which plan the battery follows"><option value="copilot">Copilot plan</option><option value="yday">Copy yesterday</option><option value="fixed">Fixed timetable</option><option value="perfect">Perfect hindsight</option></select>
+      </div>
+      <div id="chart_main" class="chart" style="height:430px"></div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle">Battery</div>
+      <div class="pline">How full it is, and what it is doing right now.</div>
+      <div class="batt">
+        <div class="cell"><div class="fill" id="fill"></div></div>
+        <div><div class="socv mono" id="socp">10%</div><div id="socm" style="color:var(--muted);font-size:.86rem">2.0 of 20 MWh</div><div class="stat" id="stat">Waiting</div></div>
+      </div>
+      <div class="ledger">
+        <div class="ptitle" style="font-size:.9rem">Money so far today</div>
+        <div class="lrow"><span>Sales revenue</span><span class="n mono pos" id="l_rev">₹0</span></div>
+        <div class="lrow"><span>Cost of power bought</span><span class="n mono neg" id="l_cost">₹0</span></div>
+        <div class="lrow"><span>Battery wear</span><span class="n mono neg" id="l_wear">₹0</span></div>
+        <div class="lrow"><span>Exchange fees</span><span class="n mono neg" id="l_fee">₹0</span></div>
+        <div class="lrow net"><span style="font-weight:700">Net profit</span><span class="n mono" id="l_net">₹0</span></div>
+      </div>
+      <div id="chart_race" style="height:190px;margin-top:6px"></div>
+    </div>
   </div>
 
-  <!-- TOMORROW -->
-  <section id="tomorrow" class="on">
-    <div class="eyebrow">Tomorrow's plan</div>
-    <h1 id="t_title">What should the battery do tomorrow?</h1>
-    <p class="lede">The copilot guesses tomorrow's electricity price for every 15 minutes, then works out when to <b>buy</b> cheap power and when to <b>sell</b> it dear. Here is its plan, ready to send to the exchange.</p>
-    <div class="grid g4" id="t_cards"></div>
-    <div class="story" id="t_story"></div>
-    <div class="chart" id="t_chart"></div>
-    <h2>Orders to send <span class="tip" title="One order for each 15-minute slot where the battery buys or sells. The price limit stops the order if the real price is much worse than expected.">?</span></h2>
-    <div class="row" style="margin:8px 0 12px"><label class="row" style="gap:8px;font-weight:600"><input type="checkbox" id="guard" checked> Add safety price limits</label>
-      <button class="btn primary" id="dl">Download orders (CSV)</button><span class="mut" id="t_count"></span></div>
-    <div class="scroll"><table id="t_orders"></table></div>
-  </section>
+  <div class="kpis" id="kpis"></div>
 
-  <!-- ANY DAY -->
-  <section id="day">
-    <div class="eyebrow">Replay any day</div>
-    <h1>How would it have traded on a real day?</h1>
-    <p class="lede">Pick any day from the last two years, or press play. The plan is made from the forecast, then paid at the real prices, and compared with simply copying yesterday.</p>
-    <div class="row"><button class="btn primary" id="play">Play</button><input class="day-slider" id="dayslider" type="range" min="0" value="0"><span class="daylabel" id="daylabel"></span></div>
-    <div class="grid g4" id="d_cards" style="margin-top:18px"></div>
-    <div class="story" id="d_story"></div>
-    <div class="chart" id="d_chart"></div>
-  </section>
-
-  <!-- RESULTS -->
-  <section id="results">
-    <div class="eyebrow">Results</div>
-    <h1>Does it really make more money?</h1>
-    <p class="lede">We tested the copilot on a full year it had never seen (22 Nov 2025 to 21 Nov 2026), for a 10 MW / 20 MWh battery, against the simple plans a trader could use today.</p>
-    <div class="grid g4" id="r_cards"></div>
-    <div class="chart" id="r_cum"></div>
-    <div class="grid g2"><div class="chart" id="r_month"></div><div class="chart" id="r_dow"></div></div>
-    <h2>Does it still win if our guesses about the battery are wrong?</h2>
-    <p class="lede" style="margin-bottom:10px">We changed wear cost, fees, battery size and efficiency, and re-ran the whole year each time.</p>
-    <div class="card"><table id="r_stress"></table></div>
-  </section>
-
-  <!-- HOW -->
-  <section id="how">
-    <div class="eyebrow">How it works</div>
-    <h1>Three simple steps, built on serious maths</h1>
-    <p class="lede">Each morning the copilot does a trader's homework in under a second.</p>
-    <div class="grid g3">
-      <div class="card step"><div class="num">1</div><div><h3>Guess tomorrow's prices</h3><p>Two models make a guess for each of the 96 slots, and we blend them: <b>LEAR</b>, the standard research model for electricity prices (Lago et al., 2021), and <b>Chronos</b>, a deep-learning foundation model from Amazon trained on millions of time series (Ansari et al., 2024). Chronos also gives a likely range.</p></div></div>
-      <div class="card step"><div class="num">2</div><div><h3>Find the best plan</h3><p>An optimiser tries every possible way to fill and empty the battery and keeps the one that earns the most, after losses and wear. It never breaks the battery's limits. On this page it runs live in your browser (dynamic programming); the reported results use the exact linear-programming version.</p></div></div>
-      <div class="card step"><div class="num">3</div><div><h3>Send the orders</h3><p>The plan becomes buy and sell orders for each 15-minute slot, with safety price limits from the likely range, so a surprise price cannot hurt much.</p></div></div>
+  <div class="g2">
+    <div class="panel">
+      <div class="ptitle">Two years at a glance</div>
+      <div class="pline">Each square is a day: green means the copilot beat copying yesterday. Click any day to load it into the simulator.</div>
+      <div id="chart_cal" style="height:300px"></div>
     </div>
-    <h2>Why blend two models?</h2>
-    <p class="lede" style="margin-bottom:6px">Being closer on price is not the same as earning more. Chronos misses prices about as much as copying yesterday, yet earns more because it gets the <b>shape</b> of the day right. The blend earns the most.</p>
-    <div class="grid g2"><div class="chart" id="h_models"></div><div class="chart" id="h_scatter"></div></div>
-    <h2>How we know it is not luck</h2>
-    <div class="grid g3" id="h_tests"></div>
-    <h2>The maths, in one line</h2>
-    <div class="story">Maximise &nbsp;<b>Σ price × sold − price × bought − wear × sold</b>&nbsp; over the 96 slots, while stored energy = yesterday's energy + 94% of what is bought − what is sold ÷ 94%, stored energy stays between 10% and 100%, and the battery never moves more than its power limit in 15 minutes.</div>
-  </section>
+    <div class="panel">
+      <div class="ptitle">Track record</div>
+      <div class="pline">Extra money over copying yesterday, adding up. Shaded: the test year the models never saw.</div>
+      <div id="chart_cum" style="height:300px"></div>
+    </div>
+  </div>
+
+  <div class="g3">
+    <div class="panel">
+      <div class="ptitle">Your battery</div>
+      <div class="pline">Change the battery; every plan re-optimises instantly.</div>
+      <div class="settings">
+        <div><label>Power <output id="o_mw"></output></label><input id="mw" type="range" min="5" max="50" step="5" value="10"></div>
+        <div><label>Storage <output id="o_h"></output></label><input id="h" type="range" min="1" max="4" step="1" value="2"></div>
+        <div><label>Efficiency <output id="o_rte"></output></label><input id="rte" type="range" min="80" max="95" step="1" value="88"></div>
+        <div><label>Wear per MWh <output id="o_wear"></output></label><input id="wear" type="range" min="0" max="2000" step="100" value="1000"></div>
+        <div><label>Fee per MWh <output id="o_fee"></output></label><input id="fee" type="range" min="0" max="50" step="5" value="0"></div>
+        <div><label>Safety price limits <output id="o_guard">on</output></label><input id="guard" type="range" min="0" max="1" step="1" value="1"></div>
+      </div>
+    </div>
+    <div class="panel" style="grid-column: span 2">
+      <div class="ptitle">Orders for the exchange</div>
+      <div class="pline">The plan as buy and sell orders for each 15-minute block, with price limits from the forecast range.</div>
+      <div class="scroll"><table id="orders"></table></div>
+      <div style="margin-top:10px;display:flex;gap:10px;align-items:center"><button class="btn primary" id="dl">Download orders (CSV)</button><span id="ocount" style="color:var(--muted);font-size:.86rem"></span></div>
+    </div>
+  </div>
+
+  <div class="how">
+    <div class="panel"><div class="n">1</div><h4>Forecast</h4><p>LEAR, the standard research model, and Chronos, a deep-learning foundation model, guess all 96 prices for tomorrow. We blend them.</p></div>
+    <div class="panel"><div class="n">2</div><h4>Optimise</h4><p>An optimiser finds the plan that earns the most after losses and wear, within the battery's limits. It runs in your browser.</p></div>
+    <div class="panel"><div class="n">3</div><h4>Order</h4><p>The plan becomes exchange orders with safety price limits, ready to download and submit.</p></div>
+    <div class="panel"><div class="n">4</div><h4>Proven</h4><p id="proof"></p></div>
+  </div>
 </main>
-<footer><div class="wrap">Team D01 · Data2Decision 2026 · Data: Indian Energy Exchange Day-Ahead Market. Forecasts: LEAR ensemble and Chronos-Bolt. All results out of sample.</div></footer>
 
 <script>
 const D = window.DATA, M = D.m4;
-const fmt = x => "₹" + Math.round(x).toLocaleString("en-IN");
-const sgn = x => (x >= 0 ? "+" : "−") + "₹" + Math.abs(Math.round(x)).toLocaleString("en-IN");
-const SLOT = [...Array(96)].map((_, i) => String(Math.floor(i / 4)).padStart(2, "0") + ":" + String(15 * (i % 4)).padStart(2, "0"));
-const X = [...Array(96)].map((_, i) => i / 4);
-const BLUE = "#2563eb", INK = "#0f172a", GREY = "#94a3b8", GREEN = "#059669", RED = "#dc2626", NAVY = "#0f2c59";
-const LAYOUT = { font: { family: "Inter, system-ui, sans-serif", size: 12, color: INK }, paper_bgcolor: "#fff", plot_bgcolor: "#fff",
-  margin: { l: 56, r: 56, t: 70, b: 40 }, hovermode: "x unified", legend: { orientation: "h", y: 1.1, x: 0 },
-  xaxis: { showgrid: false, linecolor: "#e2e8f0" }, yaxis: { gridcolor: "#f1f5f9", zeroline: false } };
+const $ = id => document.getElementById(id);
+const R = x => "₹" + Math.round(x).toLocaleString("en-IN");
+const SG = x => (x >= 0 ? "+" : "−") + "₹" + Math.abs(Math.round(x)).toLocaleString("en-IN");
+const SLOT = [...Array(97)].map((_, i) => String(Math.floor(i / 4)).padStart(2, "0") + ":" + String(15 * (i % 4)).padStart(2, "0"));
+const X = [...Array(96)].map((_, i) => i / 4 + 0.125);
+const C = { blue: "#2563eb", ink: "#0b1220", grey: "#9ca3af", green: "#10b981", red: "#ef4444", navy: "#0f2c59", amber: "#f59e0b" };
+const BASE = { font: { family: "Inter, system-ui, sans-serif", size: 12, color: "#0b1220" }, paper_bgcolor: "#fff", plot_bgcolor: "#fff",
+  margin: { l: 54, r: 54, t: 30, b: 34 }, legend: { orientation: "h", y: 1.1, x: 0, font: { size: 11 } }, hovermode: "x unified",
+  hoverlabel: { bgcolor: "#fff", bordercolor: "#e5e7eb", font: { family: "Inter" } } };
 const CFG = { displayModeBar: false, responsive: true };
+const clone = o => JSON.parse(JSON.stringify(o));
 
-// ---------------- settings
-const S = () => ({ mw: +mw.value, mwh: +mw.value * +h.value, rte: +rte.value / 100, wear: +wear.value, fee: +fee.value });
-function showSettings() { o_mw.textContent = mw.value + " MW"; o_h.textContent = h.value + " h (" + (+mw.value * +h.value) + " MWh)"; o_rte.textContent = rte.value + "%"; o_wear.textContent = fmt(+wear.value); o_fee.textContent = fmt(+fee.value); }
+let mode = "replay", di = Math.max(0, D.days.indexOf(M.example_day.date)), t = 0, timer = null, P = null;
+const S = () => ({ mw: +$("mw").value, mwh: +$("mw").value * +$("h").value, rte: +$("rte").value / 100, wear: +$("wear").value, fee: +$("fee").value });
 
-// ---------------- dynamic-programming planner (exact on a fine storage grid)
-function plan(p, s) {
-  // storage grid chosen so a full-power charge is exactly 20 steps; finer grid = closer to the exact optimum
+function dpPlan(p, s) {
   const eta = Math.sqrt(s.rte), smin = 0.1 * s.mwh, step = (eta * s.mw / 4) / 20, N = Math.floor((s.mwh - smin) / step + 1e-9);
-  const kc = 20, kd = Math.floor((s.mw / 4 / eta) / step + 1e-9);
-  const T = 96, NEG = -1e18; let V = new Float64Array(N + 1).fill(NEG); V[0] = 0;
-  const choice = []; for (let t = 0; t < T; t++) choice.push(new Int16Array(N + 1));
-  for (let t = T - 1; t >= 0; t--) {
+  const kc = 20, kd = Math.floor((s.mw / 4 / eta) / step + 1e-9), NEG = -1e18;
+  let V = new Float64Array(N + 1).fill(NEG); V[0] = 0; const ch = [];
+  for (let k = 0; k < 96; k++) ch.push(new Int16Array(N + 1));
+  for (let k = 95; k >= 0; k--) {
     const nv = new Float64Array(N + 1).fill(NEG);
-    for (let i = 0; i <= N; i++) {
-      let best = NEG, bj = 0;
-      for (let j = -Math.min(kd, i); j <= Math.min(kc, N - i); j++) {
-        const nxt = V[i + j]; if (nxt <= NEG / 2) continue;
-        const e = Math.abs(j) * step;
-        const r = j > 0 ? -(p[t] + s.fee) * e / eta : j < 0 ? (p[t] - s.wear - s.fee) * e * eta : 0;
-        if (r + nxt > best) { best = r + nxt; bj = j; }
-      }
-      nv[i] = best; choice[t][i] = bj;
-    }
-    V = nv;
-  }
+    for (let i = 0; i <= N; i++) { let b = NEG, bj = 0;
+      for (let j = -Math.min(kd, i); j <= Math.min(kc, N - i); j++) { const nx = V[i + j]; if (nx <= NEG / 2) continue;
+        const e = Math.abs(j) * step, r = j > 0 ? -(p[k] + s.fee) * e / eta : j < 0 ? (p[k] - s.wear - s.fee) * e * eta : 0;
+        if (r + nx > b) { b = r + nx; bj = j; } }
+      nv[i] = b; ch[k][i] = bj; }
+    V = nv; }
   const buy = [], sell = [], soc = []; let i = 0;
-  for (let t = 0; t < T; t++) { const j = choice[t][i], e = Math.abs(j) * step; buy.push(j > 0 ? e / eta : 0); sell.push(j < 0 ? e * eta : 0); i += j; soc.push(smin + i * step); }
+  for (let k = 0; k < 96; k++) { const j = ch[k][i], e = Math.abs(j) * step; buy.push(j > 0 ? e / eta : 0); sell.push(j < 0 ? e * eta : 0); i += j; soc.push(smin + i * step); }
   return { buy, sell, soc };
 }
-function money(pl, p, s) { let m = 0; for (let t = 0; t < 96; t++) m += p[t] * pl.sell[t] - p[t] * pl.buy[t] - s.wear * pl.sell[t] - s.fee * (pl.buy[t] + pl.sell[t]); return m; }
-function windows(arr) { const out = []; let a = -1; for (let t = 0; t <= 96; t++) { const on = t < 96 && arr[t] > 1e-6; if (on && a < 0) a = t; if (!on && a >= 0) { out.push([a, t - 1]); a = -1; } } return out; }
-const wtxt = ws => ws.slice(0, 3).map(([a, b]) => SLOT[a] + "–" + SLOT[Math.min(b + 1, 95)]).join(", ") + (ws.length > 3 ? " and more" : "");
-const avgPrice = (q, p) => { let e = 0, c = 0; for (let t = 0; t < 96; t++) { e += q[t]; c += q[t] * p[t]; } return e ? c / e : 0; };
+function fixedPlan(s) { const eta = Math.sqrt(s.rte), smin = 0.1 * s.mwh, use = 0.9 * s.mwh, per = Math.min(use / 16, eta * s.mw / 4), out = Math.min(use / 16, s.mw / 4 / eta);
+  const buy = Array(96).fill(0), sell = Array(96).fill(0), soc = []; let e = smin;
+  for (let k = 0; k < 96; k++) { if (k >= 44 && k < 60) { buy[k] = per / eta; e += per; } if (k >= 72 && k < 88) { const o = Math.min(out, e - smin); sell[k] = o * eta; e -= o; } soc.push(e); }
+  return { buy, sell, soc }; }
 
-function card(k, v, s, cls) { return `<div class="card"><div class="k">${k}</div><div class="v">${v}</div>${s ? `<div class="s ${cls || "mut"}">${s}</div>` : ""}</div>`; }
-
-function planChart(el, fc, lo, hi, prev, actual, pl, title) {
-  const tr = [];
-  if (lo) { tr.push({ x: X, y: hi, line: { width: 0 }, hoverinfo: "skip", showlegend: false });
-            tr.push({ x: X, y: lo, fill: "tonexty", fillcolor: "rgba(37,99,235,0.12)", line: { width: 0 }, name: "likely range", hoverinfo: "skip" }); }
-  if (prev) tr.push({ x: X, y: prev, name: "copy of yesterday", line: { color: GREY, width: 1.3 } });
-  if (actual) tr.push({ x: X, y: actual, name: "real price", line: { color: INK, width: 2.2 } });
-  tr.push({ x: X, y: fc, name: "copilot forecast", line: { color: BLUE, width: 2.8 } });
-  tr.push({ x: X, y: pl.buy.map(v => v * 4), type: "bar", name: "buy (MW)", marker: { color: GREEN }, xaxis: "x", yaxis: "y2", width: 0.2 });
-  tr.push({ x: X, y: pl.sell.map(v => -v * 4), type: "bar", name: "sell (MW)", marker: { color: RED }, xaxis: "x", yaxis: "y2", width: 0.2 });
-  tr.push({ x: X, y: pl.soc, name: "stored (MWh)", line: { color: NAVY, width: 1.8, dash: "dot" }, yaxis: "y3" });
-  const L = JSON.parse(JSON.stringify(LAYOUT));
-  Object.assign(L, { height: 560, barmode: "relative", margin: { l: 56, r: 56, t: 90, b: 40 }, legend: { orientation: "h", y: 1.07, x: 0 }, title: { text: title, font: { size: 15 }, x: 0.01, y: 0.985 },
-    yaxis: { domain: [0.42, 1], title: "₹ per MWh", gridcolor: "#f1f5f9" }, yaxis2: { domain: [0, 0.34], title: "MW", gridcolor: "#f1f5f9", zeroline: true, zerolinecolor: "#cbd5e1" },
-    yaxis3: { domain: [0, 0.34], overlaying: "y2", side: "right", title: "MWh stored", showgrid: false },
-    xaxis: { tickvals: [0, 3, 6, 9, 12, 15, 18, 21, 24], ticktext: ["00:00", "03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00", "24:00"], showgrid: false, anchor: "y2" } });
-  Plotly.react(el, tr, L, CFG);
+function dayData() {
+  if (mode === "tomorrow") { const B = D.bid; return { date: B.date, price: B.fc, fc: B.fc, lo: B.lo, hi: B.hi, prev: B.today, known: false }; }
+  return { date: D.days[di], price: D.actual[di], fc: D.blend[di], lo: D.lo[di], hi: D.hi[di], prev: D.prev[di], known: true };
 }
+function compute() { const s = S(), d = dayData(); P = { s, d, copilot: dpPlan(d.fc, s), yday: dpPlan(d.prev, s), fixed: fixedPlan(s), perfect: d.known ? dpPlan(d.price, s) : null }; }
+function ledger(pl, upto) { const s = P.s, p = P.d.price; let rev = 0, cost = 0, wear = 0, fee = 0; const cum = [];
+  for (let k = 0; k < 96; k++) { if (k < upto) { rev += p[k] * pl.sell[k]; cost += p[k] * pl.buy[k]; wear += s.wear * pl.sell[k]; fee += s.fee * (pl.buy[k] + pl.sell[k]); }
+    cum.push(k < upto ? rev - cost - wear - fee : null); }
+  return { rev, cost, wear, fee, net: rev - cost - wear - fee, cum }; }
+const active = () => P[$("strat").value] || P.copilot;
 
-// ---------------- TOMORROW
-function renderTomorrow() {
-  const s = S(), B = D.bid, pl = plan(B.fc, s), exp = money(pl, B.fc, s);
-  const date = new Date(B.date + "T00:00"); const dname = date.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-  t_title.textContent = "The plan for " + dname;
-  const bw = windows(pl.buy), sw = windows(pl.sell), mb = pl.buy.reduce((a, b) => a + b, 0), ms = pl.sell.reduce((a, b) => a + b, 0);
-  t_cards.innerHTML = card("Expected profit", fmt(exp), "if prices match the forecast", "mut") + card("Buy", mb.toFixed(1) + " MWh", wtxt(bw)) +
-    card("Sell", ms.toFixed(1) + " MWh", wtxt(sw)) + card("Cheapest slot", fmt(Math.min(...B.fc)), "at " + SLOT[B.fc.indexOf(Math.min(...B.fc))]);
-  t_story.innerHTML = `Tomorrow the copilot expects power to be cheapest around <b>${SLOT[B.fc.indexOf(Math.min(...B.fc))]}</b> and dearest around <b>${SLOT[B.fc.indexOf(Math.max(...B.fc))]}</b>. ` +
-    `So it <b>buys</b> at ${wtxt(bw)} (average ${fmt(avgPrice(pl.buy, B.fc))}) and <b>sells</b> at ${wtxt(sw)} (average ${fmt(avgPrice(pl.sell, B.fc))}). ` +
-    `Expected profit: <b>${fmt(exp)}</b>, after battery losses and wear.`;
-  planChart("t_chart", B.fc, B.lo, B.hi, B.today, null, pl, "Forecast for tomorrow and the battery's plan");
-  const rows = []; for (let t = 0; t < 96; t++) {
-    if (pl.buy[t] > 1e-6) rows.push([SLOT[t], t + 1, "BUY", (pl.buy[t] * 4).toFixed(2), guard.checked ? B.hi[t] : "market"]);
-    if (pl.sell[t] > 1e-6) rows.push([SLOT[t], t + 1, "SELL", (pl.sell[t] * 4).toFixed(2), guard.checked ? B.lo[t] : "market"]);
+function skyAt(h) {
+  const stops = [[0, "#0b1736", "#13254d"], [5, "#1e2a5a", "#3b3f74"], [6.2, "#f59e0b", "#fcd34d"], [7.5, "#60a5fa", "#bfdbfe"], [12, "#3b82f6", "#93c5fd"],
+                 [16.5, "#60a5fa", "#fde68a"], [18, "#f97316", "#fdba74"], [19.2, "#3b3f74", "#1e2a5a"], [24, "#0b1736", "#13254d"]];
+  let a = stops[0], b = stops[stops.length - 1]; for (let i = 0; i < stops.length - 1; i++) if (h >= stops[i][0] && h <= stops[i + 1][0]) { a = stops[i]; b = stops[i + 1]; break; }
+  const f = (h - a[0]) / Math.max(1e-6, b[0] - a[0]), mix = (c1, c2) => { const p = x => [1, 3, 5].map(i => parseInt(x.slice(i, i + 2), 16)); const A = p(c1), B = p(c2);
+    return "rgb(" + A.map((v, i) => Math.round(v + (B[i] - v) * f)).join(",") + ")"; };
+  return `linear-gradient(180deg, ${mix(a[1], b[1])} 0%, ${mix(a[2], b[2])} 100%)`;
+}
+function renderSky() {
+  const h = t / 4, sun = h >= 6 && h <= 18.5, orb = $("orb");
+  $("sky").style.background = skyAt(Math.min(h, 23.99));
+  if (sun) { const f = (h - 6) / 12.5; orb.style.left = (12 + 76 * f) + "%"; orb.style.top = (88 - 62 * Math.sin(Math.PI * f)) + "%"; orb.style.background = "#fde047"; orb.style.boxShadow = "0 0 40px 12px rgba(253,224,71,.55)"; }
+  else { const hh = h < 6 ? h + 24 : h, f = (hh - 18.5) / 11.5; orb.style.left = (12 + 76 * f) + "%"; orb.style.top = (80 - 50 * Math.sin(Math.PI * f)) + "%"; orb.style.background = "#e5e7eb"; orb.style.boxShadow = "0 0 24px 6px rgba(229,231,235,.35)"; }
+  $("clock").textContent = SLOT[Math.min(t, 96)];
+  const k = Math.min(t, 95), pr = P.d.price[k];
+  $("nowprice").textContent = R(pr); $("nowpl").textContent = P.d.known ? "real price now, per MWh" : "forecast price, per MWh";
+  const pl = active(), act = $("action");
+  let txt = "Waiting for a better price", col = "#9ca3af";
+  if (t < 96) { if (pl.buy[k] > 1e-6) { txt = `Buying ${(pl.buy[k] * 4).toFixed(1)} MW at ${R(pr)}`; col = C.green; } else if (pl.sell[k] > 1e-6) { txt = `Selling ${(pl.sell[k] * 4).toFixed(1)} MW at ${R(pr)}`; col = C.red; } }
+  else { txt = "Day complete"; col = C.blue; }
+  act.innerHTML = `<span class="dot" style="background:${col}"></span>${txt}`;
+}
+function renderBattery() {
+  const pl = active(), s = P.s, k = Math.min(Math.max(t - 1, 0), 95), e = t === 0 ? 0.1 * s.mwh : pl.soc[k], pct = e / s.mwh;
+  const st = t === 0 || t > 96 ? "idle" : pl.buy[t - 1] > 1e-6 ? "charge" : pl.sell[t - 1] > 1e-6 ? "dis" : "idle";
+  $("fill").style.height = `calc(${(pct * 100).toFixed(1)}% - 10px)`;
+  $("fill").style.background = st === "charge" ? "linear-gradient(180deg,#34d399,#10b981)" : st === "dis" ? "linear-gradient(180deg,#f87171,#ef4444)" : "linear-gradient(180deg,#93c5fd,#2563eb)";
+  $("socp").textContent = Math.round(pct * 100) + "%"; $("socm").textContent = `${e.toFixed(1)} of ${s.mwh} MWh stored`;
+  const stat = $("stat"); stat.textContent = st === "charge" ? "Charging" : st === "dis" ? "Selling" : "Waiting";
+  stat.style.background = st === "charge" ? "#d1fae5" : st === "dis" ? "#fee2e2" : "#eef2ff"; stat.style.color = st === "charge" ? "#047857" : st === "dis" ? "#b91c1c" : "#1e3a8a";
+  const L = ledger(pl, t); $("l_rev").textContent = R(L.rev); $("l_cost").textContent = "−" + R(L.cost); $("l_wear").textContent = "−" + R(L.wear); $("l_fee").textContent = "−" + R(L.fee);
+  $("l_net").textContent = R(L.net); $("l_net").className = "n mono " + (L.net >= 0 ? "pos" : "neg");
+}
+function renderKPIs() {
+  const pl = active(), s = P.s, L = ledger(pl, t), eta = Math.sqrt(s.rte);
+  let eb = 0, es = 0, cb = 0, cs = 0, busy = 0; for (let k = 0; k < Math.min(t, 96); k++) { eb += pl.buy[k]; es += pl.sell[k]; cb += pl.buy[k] * P.d.price[k]; cs += pl.sell[k] * P.d.price[k]; if (pl.buy[k] + pl.sell[k] > 1e-6) busy++; }
+  const spread = eb && es ? cs / es - cb / eb : 0, cycles = es / eta / (0.9 * s.mwh);
+  const ref = P.d.known ? ledger(P.perfect, t).net : null, yd = ledger(P.yday, t).net;
+  const k = (lab, v, sub, cls) => `<div class="kpi"><div class="k">${lab}</div><div class="v mono ${cls || ""}">${v}</div><div class="s">${sub}</div></div>`;
+  $("kpis").innerHTML =
+    k("Net profit", R(L.net), t >= 96 ? "full day" : "so far today", L.net >= 0 ? "pos" : "neg") +
+    k("vs copying yesterday", SG(L.net - yd), "same battery, same day", L.net - yd >= 0 ? "pos" : "neg") +
+    k("Capture rate", ref && ref > 0 ? Math.round(100 * L.net / ref) + "%" : "–", P.d.known ? "of perfect hindsight" : "known after the day") +
+    k("Spread captured", spread ? R(spread) : "–", "avg sell − avg buy, per MWh") +
+    k("Cycles", cycles.toFixed(2), `equivalent full cycles · ${es.toFixed(1)} MWh sold`) +
+    k("Energy lost", (eb - es).toFixed(1) + " MWh", `round-trip losses · busy ${Math.round(100 * busy / 96)}% of slots`);
+}
+function renderMain() {
+  const pl = active(), d = P.d, mask = a => a.map((v, k) => k < t ? v : null);
+  const tr = [
+    { x: X, y: d.hi, line: { width: 0 }, hoverinfo: "skip", showlegend: false },
+    { x: X, y: d.lo, fill: "tonexty", fillcolor: "rgba(37,99,235,0.10)", line: { width: 0 }, name: "likely range", hoverinfo: "skip" },
+    { x: X, y: d.prev, name: "copy of yesterday", line: { color: C.grey, width: 1.2 } },
+    { x: X, y: d.fc, name: "copilot forecast", line: { color: C.blue, width: 2.4, dash: d.known ? "dash" : "solid" } }];
+  if (d.known) tr.push({ x: X, y: mask(d.price), name: "real price", line: { color: C.ink, width: 2.4 } });
+  tr.push({ x: X, y: mask(pl.buy.map(v => v * 4)), type: "bar", name: "buy (MW)", marker: { color: C.green }, yaxis: "y2", width: 0.2 });
+  tr.push({ x: X, y: mask(pl.sell.map(v => -v * 4)), type: "bar", name: "sell (MW)", marker: { color: C.red }, yaxis: "y2", width: 0.2 });
+  tr.push({ x: X, y: mask(pl.soc), name: "stored (MWh)", line: { color: C.navy, width: 2, shape: "spline" }, yaxis: "y3" });
+  const L = Object.assign(clone(BASE), { barmode: "relative", margin: { l: 54, r: 56, t: 40, b: 34 },
+    xaxis: { range: [0, 24], tickvals: [0, 3, 6, 9, 12, 15, 18, 21, 24], ticktext: ["00", "03", "06", "09", "12", "15", "18", "21", "24"], showgrid: false, anchor: "y2" },
+    yaxis: { domain: [0.44, 1], title: { text: "₹ per MWh", font: { size: 11 } }, gridcolor: "#f3f4f6", rangemode: "tozero" },
+    yaxis2: { domain: [0, 0.36], title: { text: "MW", font: { size: 11 } }, gridcolor: "#f3f4f6", range: [-P.s.mw * 1.1, P.s.mw * 1.1] },
+    yaxis3: { domain: [0, 0.36], overlaying: "y2", side: "right", range: [0, P.s.mwh * 1.05], showgrid: false, title: { text: "MWh", font: { size: 11 } } },
+    shapes: [{ type: "line", x0: t / 4, x1: t / 4, y0: 0, y1: 1, xref: "x", yref: "paper", line: { color: "#0b1220", width: 1.4, dash: "dot" } }] });
+  Plotly.react("chart_main", tr, L, CFG);
+}
+function renderRace() {
+  const tr = [{ x: X, y: ledger(active(), t).cum.map(v => v === null ? null : v / 1000), name: $("strat").selectedOptions[0].text, line: { color: C.blue, width: 2.6, shape: "spline" } }];
+  if ($("strat").value !== "yday") tr.push({ x: X, y: ledger(P.yday, t).cum.map(v => v === null ? null : v / 1000), name: "copy yesterday", line: { color: C.grey, width: 1.6, shape: "spline" } });
+  if (P.perfect && $("strat").value !== "perfect") tr.push({ x: X, y: ledger(P.perfect, t).cum.map(v => v === null ? null : v / 1000), name: "perfect", line: { color: C.amber, width: 1.4, dash: "dot", shape: "spline" } });
+  Plotly.react("chart_race", tr, Object.assign(clone(BASE), { margin: { l: 40, r: 10, t: 26, b: 26 }, legend: { orientation: "h", y: 1.25, x: 0, font: { size: 10 } },
+    xaxis: { range: [0, 24], tickvals: [0, 6, 12, 18, 24], showgrid: false }, yaxis: { title: { text: "₹ thousand", font: { size: 10 } }, gridcolor: "#f3f4f6" } }), CFG);
+}
+function renderCalendar() {
+  const first = new Date(D.days[0] + "T00:00"), gain = D.res.blend_2.map((v, i) => v - D.res.today_2[i]);
+  const off = (first.getDay() + 6) % 7, weeks = Math.ceil((D.days.length + off) / 7);
+  const z = [...Array(7)].map(() => Array(weeks).fill(null)), txt = [...Array(7)].map(() => Array(weeks).fill("")), cd = [...Array(7)].map(() => Array(weeks).fill(null));
+  D.days.forEach((d, i) => { const w = Math.floor((i + off) / 7), r = (i + off) % 7; z[r][w] = Math.max(-15000, Math.min(15000, gain[i])); cd[r][w] = i;
+    txt[r][w] = `${new Date(d + "T00:00").toDateString().slice(4)}<br>copilot ${R(D.res.blend_2[i])}<br>vs yesterday ${SG(gain[i])}`; });
+  const ticks = [], labs = []; let last = -1; D.days.forEach((d, i) => { const m = d.slice(0, 7); if (m !== last) { ticks.push(Math.floor((i + off) / 7)); labs.push(new Date(d + "T00:00").toLocaleDateString("en-GB", { month: "short", year: "2-digit" })); last = m; } });
+  Plotly.react("chart_cal", [{ z, text: txt, customdata: cd, type: "heatmap", hovertemplate: "%{text}<extra></extra>", xgap: 2, ygap: 2,
+    colorscale: [[0, "#ef4444"], [0.45, "#fee2e2"], [0.5, "#f3f4f6"], [0.55, "#d1fae5"], [1, "#059669"]], zmid: 0, showscale: false }],
+    Object.assign(clone(BASE), { margin: { l: 36, r: 8, t: 10, b: 30 }, hovermode: "closest", yaxis: { tickvals: [0, 1, 2, 3, 4, 5, 6], ticktext: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], autorange: "reversed", showgrid: false },
+      xaxis: { tickvals: ticks.filter((_, i) => i % 2 === 0), ticktext: labs.filter((_, i) => i % 2 === 0), showgrid: false } }), CFG);
+  $("chart_cal").on("plotly_click", ev => { const i = ev.points[0].customdata; if (i !== null && i !== undefined) { setMode("replay"); di = i; loadDay(true); window.scrollTo({ top: 0, behavior: "smooth" }); } });
+}
+function renderCum() {
+  let c = 0; const y = D.res.blend_2.map((v, i) => (c += v - D.res.today_2[i]) / 1e5);
+  Plotly.react("chart_cum", [{ x: D.days, y, fill: "tozeroy", fillcolor: "rgba(37,99,235,0.10)", line: { color: C.blue, width: 2.4 }, name: "copilot vs copying yesterday" }],
+    Object.assign(clone(BASE), { margin: { l: 50, r: 10, t: 10, b: 30 }, showlegend: false, yaxis: { title: { text: "₹ lakh", font: { size: 11 } }, gridcolor: "#f3f4f6" },
+      shapes: [{ type: "rect", xref: "x", yref: "paper", x0: "2025-11-22", x1: D.days[D.days.length - 1], y0: 0, y1: 1, fillcolor: "#eef2ff", opacity: 0.6, line: { width: 0 }, layer: "below" }] }), CFG);
+}
+function renderOrders() {
+  const pl = P.copilot, d = P.d, guard = +$("guard").value === 1, rows = [];
+  for (let k = 0; k < 96; k++) {
+    if (pl.buy[k] > 1e-6) rows.push([SLOT[k], k + 1, "BUY", (pl.buy[k] * 4).toFixed(2), guard ? d.hi[k] : "market"]);
+    if (pl.sell[k] > 1e-6) rows.push([SLOT[k], k + 1, "SELL", (pl.sell[k] * 4).toFixed(2), guard ? d.lo[k] : "market"]);
   }
-  t_orders.innerHTML = "<tr><th>Time</th><th>Block</th><th>Side</th><th class='r'>MW</th><th class='r'>Price limit ₹/MWh</th></tr>" +
-    rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td style="font-weight:700;color:${r[2] == "BUY" ? GREEN : RED}">${r[2]}</td><td class="r">${r[3]}</td><td class="r">${typeof r[4] == "number" ? r[4].toLocaleString("en-IN") : r[4]}</td></tr>`).join("");
-  t_count.textContent = rows.length + " orders";
-  dl.onclick = () => { const csv = "time,block,side,MW,price_limit\n" + rows.map(r => r.join(",")).join("\n"); const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "orders_" + B.date + ".csv"; a.click(); };
+  $("orders").innerHTML = "<tr><th>Time</th><th>Block</th><th>Side</th><th class='r'>MW</th><th class='r'>Price limit ₹/MWh</th></tr>" +
+    rows.map(r => `<tr><td class="mono">${r[0]}</td><td>${r[1]}</td><td style="font-weight:700;color:${r[2] === "BUY" ? "#059669" : "#dc2626"}">${r[2]}</td><td class="r mono">${r[3]}</td><td class="r mono">${typeof r[4] === "number" ? r[4].toLocaleString("en-IN") : r[4]}</td></tr>`).join("");
+  $("ocount").textContent = `${rows.length} orders for ${new Date(d.date + "T00:00").toDateString()}`;
+  $("dl").onclick = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["time,block,side,MW,price_limit\n" + rows.map(r => r.join(",")).join("\n")], { type: "text/csv" }));
+    a.download = `orders_${d.date}.csv`; a.click(); };
 }
-
-// ---------------- ANY DAY
-const ex = D.days.indexOf(M.example_day.date); dayslider.max = D.days.length - 1; dayslider.value = ex >= 0 ? ex : D.days.length - 30;
-function renderDay() {
-  const s = S(), i = +dayslider.value, act = D.actual[i], fc = D.blend[i], prev = D.prev[i];
-  const date = new Date(D.days[i] + "T00:00"); daylabel.textContent = date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
-  const pc = plan(fc, s), py = plan(prev, s), pp = plan(act, s);
-  const mc = money(pc, act, s), my = money(py, act, s), mp = money(pp, act, s);
-  d_cards.innerHTML = card("Copilot earned", fmt(mc), sgn(mc - my) + " vs copying yesterday", mc >= my ? "pos" : "neg") + card("Copying yesterday", fmt(my)) +
-    card("Perfect guess (best possible)", fmt(mp)) + card("Share of the best", mp > 0 ? Math.round(100 * mc / mp) + "%" : "–");
-  let miss = 0, mt = 0; for (let t = 0; t < 96; t++) { const e = Math.abs(fc[t] - act[t]); if (e > miss) { miss = e; mt = t; } }
-  const bw = windows(pc.buy), sw = windows(pc.sell);
-  d_story.innerHTML = `On this day the copilot <b>bought</b> at ${wtxt(bw) || "no time"} for an average of <b>${fmt(avgPrice(pc.buy, act))}</b> and <b>sold</b> at ${wtxt(sw) || "no time"} for <b>${fmt(avgPrice(pc.sell, act))}</b>. ` +
-    `It earned <b>${fmt(mc)}</b>, which is <b class="${mc >= my ? "pos" : "neg"}">${sgn(mc - my)}</b> compared with copying yesterday, and ${mp > 0 ? Math.round(100 * mc / mp) : 0}% of the best possible. ` +
-    `Its biggest miss was at <b>${SLOT[mt]}</b>: it expected ${fmt(fc[mt])}, the real price was ${fmt(act[mt])}.`;
-  planChart("d_chart", fc, D.lo[i], D.hi[i], prev, act, pc, "Forecast vs real price, and the plan");
+function frame() { renderSky(); renderBattery(); renderKPIs(); renderMain(); renderRace(); $("scrub").value = t; }
+function loadDay(autoplay) {
+  stop(); compute(); t = mode === "tomorrow" ? 96 : 0;
+  const d = new Date(P.d.date + "T00:00");
+  $("daylab").textContent = d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) + (mode === "tomorrow" ? " · forecast" : " · real prices");
+  $("datein").value = P.d.date;
+  $("topline").textContent = mode === "tomorrow" ? "Tomorrow's prices are a forecast; this is the plan and the profit it expects. Download the orders below."
+                                                 : "Press play to watch the battery trade this real day, slot by slot, at the real prices.";
+  renderOrders(); frame(); if (autoplay) start();
 }
-let timer = null; play.onclick = () => { if (timer) { clearInterval(timer); timer = null; play.textContent = "Play"; return; }
-  play.textContent = "Pause"; timer = setInterval(() => { dayslider.value = (+dayslider.value + 1) % D.days.length; renderDay(); }, 700); };
+function start() { if (timer) return; if (t >= 96) t = 0; $("play").textContent = "Pause"; timer = setInterval(() => { t++; frame(); if (t >= 96) stop(); }, +$("speed").value); }
+function stop() { clearInterval(timer); timer = null; $("play").textContent = t >= 96 ? "Replay" : "Play"; }
+function setMode(m) { mode = m; document.querySelectorAll("#mode button").forEach(b => b.classList.toggle("on", b.dataset.m === m)); $("datebox").style.visibility = m === "tomorrow" ? "hidden" : "visible";
+  $("strat").querySelector("option[value=perfect]").disabled = m === "tomorrow"; if (m === "tomorrow" && $("strat").value === "perfect") $("strat").value = "copilot"; }
 
-// ---------------- RESULTS (exact linear-programming results from the notebook)
-function renderResults() {
-  const t = M.test, g = M.tests.test.blend_vs_today_2;
-  r_cards.innerHTML = card("Money per day", fmt(t.blend_2), sgn(g.gain) + " vs copying yesterday", "pos") + card("Money per year", "₹" + (t.blend_2 * 365 / 1e7).toFixed(2) + " crore", "10 MW / 20 MWh battery") +
-    card("Share of the best possible", (100 * M.share_test.blend).toFixed(1) + "%", "a perfect guess = 100%") + card("Months ahead", M.months_positive + " of " + M.months_total, "chance it is luck below 0.1%", "pos");
-  const idx = D.days.map(d => d), cum = (a, b) => { let c = 0; return a.map((v, k) => (c += v - b[k]) / 1e5); };
-  Plotly.react("r_cum", [
-    { x: idx, y: cum(D.res.blend_2, D.res.today_2), name: "Copilot", line: { color: BLUE, width: 2.6 } },
-    { x: idx, y: cum(D.res.fixed, D.res.today_2), name: "Fixed timetable from the brief", line: { color: RED, width: 2 } }],
-    Object.assign(JSON.parse(JSON.stringify(LAYOUT)), { height: 380, title: { text: "Extra money over copying yesterday, adding up (₹ lakh)", font: { size: 15 }, x: 0.01 }, yaxis: { range: [-60, 35], gridcolor: "#f1f5f9" },
-      shapes: [{ type: "rect", xref: "x", yref: "paper", x0: "2025-11-22", x1: D.days[D.days.length - 1], y0: 0, y1: 1, fillcolor: "#eef2ff", opacity: 0.5, line: { width: 0 }, layer: "below" }],
-      annotations: [{ x: "2025-11-22", y: 1, xref: "x", yref: "paper", text: "test year", showarrow: false, xanchor: "left", yanchor: "top", font: { color: "#64748b" } }] }), CFG);
-  Plotly.react("r_month", [{ x: D.monthly.labels, y: D.monthly.values, type: "bar", marker: { color: D.monthly.values.map(v => v >= 0 ? GREEN : RED) } }],
-    Object.assign(JSON.parse(JSON.stringify(LAYOUT)), { height: 320, title: { text: "Extra money per day, each month", font: { size: 14 }, x: 0.01 }, hovermode: "closest" }), CFG);
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  Plotly.react("r_dow", [{ x: days, y: days.map(d => D.dow[d]), type: "bar", marker: { color: days.map(d => D.dow[d] >= 0 ? BLUE : RED) } }],
-    Object.assign(JSON.parse(JSON.stringify(LAYOUT)), { height: 320, title: { text: "Extra money per day, by weekday (test year)", font: { size: 14 }, x: 0.01 }, hovermode: "closest" }), CFG);
-  r_stress.innerHTML = "<tr><th>What we changed</th><th class='r'>Copilot ₹/day</th><th class='r'>Copying yesterday ₹/day</th><th class='r'>Extra</th><th class='r'>Share of best</th></tr>" +
-    M.sensitivity.map(r => `<tr><td>${r.setting}</td><td class="r">${fmt(r["assistant ₹/day"])}</td><td class="r">${fmt(r["tomorrow = today ₹/day"])}</td><td class="r pos">${sgn(r["extra ₹/day"])}</td><td class="r">${(100 * r["share of best"]).toFixed(1)}%</td></tr>`).join("");
-}
-
-// ---------------- HOW
-function renderHow() {
-  const u = D.upgrades.test, L = D.lear_monthly;
-  const names = ["Copy yesterday", "LEAR", "Chronos", "Blend"], gains = [0, u.ens_1.gain_vs_lag1, u.chr_1.gain_vs_lag1, u.blend_1.gain_vs_lag1];
-  Plotly.react("h_models", [{ x: names, y: gains, type: "bar", marker: { color: [GREY, "#6b8fc2", "#d97706", BLUE] }, text: gains.map(g => g ? sgn(g) : "baseline"), textposition: "outside" }],
-    Object.assign(JSON.parse(JSON.stringify(LAYOUT)), { height: 340, title: { text: "Extra money per day vs copying yesterday (test year)", font: { size: 14 }, x: 0.01 }, hovermode: "closest", yaxis: { range: [0, 3600], gridcolor: "#f1f5f9" }, xaxis: { tickangle: 0, showgrid: false } }), CFG);
-  const mae = D.upgrades.mae, earn = [u.blend_1.mean - u.blend_1.gain_vs_lag1, u.ens_1.mean, u.chr_1.mean, u.blend_1.mean];
-  Plotly.react("h_scatter", [{ x: [mae.lag1, mae.ens, mae.chr, mae.blend], y: earn, mode: "markers+text", text: names, textposition: ["bottom center", "bottom center", "bottom center", "top center"], marker: { size: 16, color: [GREY, "#6b8fc2", "#d97706", BLUE] } }],
-    Object.assign(JSON.parse(JSON.stringify(LAYOUT)), { height: 340, title: { text: "Price error vs money earned", font: { size: 14 }, x: 0.01 }, hovermode: "closest",
-      xaxis: { title: "average price error, ₹/MWh (lower is better)", showgrid: false, range: [Math.min(mae.lag1, mae.ens, mae.chr, mae.blend) - 45, Math.max(mae.lag1, mae.ens, mae.chr, mae.blend) + 45] }, yaxis: { title: "₹ per day", gridcolor: "#f1f5f9", range: [Math.min(...earn) - 900, Math.max(...earn) + 600] } }), CFG);
-  const tv = M.tests.validate.blend_vs_today_2, tt = M.tests.test.blend_vs_today_2;
-  h_tests.innerHTML = card("Tested on unseen days", "2 years", "the blend was chosen on year one, then frozen for year two") +
-    card("95% range of the extra money", fmt(tt.ci[0]) + " to " + fmt(tt.ci[1]), "per day, test year; resampling whole weeks", "pos") +
-    card("Chance it is luck", "0.06%", "Diebold–Mariano test; validation year " + sgn(tv.gain) + "/day", "pos");
-}
-
-// ---------------- wiring
-document.querySelectorAll("#nav button").forEach(b => b.onclick = () => {
-  document.querySelectorAll("#nav button").forEach(x => x.classList.toggle("on", x === b));
-  document.querySelectorAll("section").forEach(sct => sct.classList.toggle("on", sct.id === b.dataset.s));
-  settings.style.display = (b.dataset.s === "tomorrow" || b.dataset.s === "day") ? "grid" : "none";
-  ({ tomorrow: renderTomorrow, day: renderDay, results: renderResults, how: renderHow })[b.dataset.s]();
-  window.dispatchEvent(new Event("resize"));
-});
-[mw, h, rte, wear, fee].forEach(el => el.oninput = () => { showSettings(); if (tomorrow.classList.contains("on")) renderTomorrow(); if (day.classList.contains("on")) renderDay(); });
-guard.onchange = renderTomorrow; dayslider.oninput = renderDay;
-showSettings(); renderTomorrow();
+$("play").onclick = () => timer ? stop() : start();
+$("scrub").oninput = e => { stop(); t = +e.target.value; frame(); };
+$("speed").onchange = () => { if (timer) { stop(); start(); } };
+$("strat").onchange = () => frame();
+document.querySelectorAll("#mode button").forEach(b => b.onclick = () => { setMode(b.dataset.m); loadDay(false); });
+$("prevd").onclick = () => { di = Math.max(0, di - 1); loadDay(false); };
+$("nextd").onclick = () => { di = Math.min(D.days.length - 1, di + 1); loadDay(false); };
+$("datein").min = D.days[0]; $("datein").max = D.days[D.days.length - 1];
+$("datein").onchange = e => { const i = D.days.indexOf(e.target.value); if (i >= 0) { di = i; loadDay(false); } };
+function showSettings() { $("o_mw").textContent = $("mw").value + " MW"; $("o_h").textContent = $("h").value + " h · " + (+$("mw").value * +$("h").value) + " MWh"; $("o_rte").textContent = $("rte").value + "%";
+  $("o_wear").textContent = R(+$("wear").value); $("o_fee").textContent = R(+$("fee").value); $("o_guard").textContent = +$("guard").value ? "on" : "off"; }
+["mw", "h", "rte", "wear", "fee"].forEach(id => $(id).oninput = () => { showSettings(); const keep = t; compute(); t = keep; renderOrders(); frame(); });
+$("guard").oninput = () => { showSettings(); renderOrders(); };
+const g = M.tests.test.blend_vs_today_2;
+$("proof").innerHTML = `On a year it never saw: <b>${R(M.test.blend_2)}</b> a day, <b class="pos">${SG(g.gain)}</b> vs copying yesterday, ahead in ${M.months_positive} of ${M.months_total} months; chance it is luck under 0.1%.`;
+showSettings(); setMode("replay"); loadDay(false); renderCalendar(); renderCum();
 </script>
 </body>
 </html>
