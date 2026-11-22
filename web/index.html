@@ -643,7 +643,7 @@ function renderAudit() {
 }
 
 mode = "replay"; showSettings(); showBizInputs(); buildCases(); renderTomorrow(); loadDay(false); renderCalendar(); renderCum(); staticTakeaways();
-const startTab = location.hash.replace("#", ""); if (["tmr", "replay", "proof", "biz", "audit"].includes(startTab) && startTab !== "tmr") showTab(startTab);
+const startTab = location.hash.replace("#", ""); if (["iex", "tmr", "replay", "proof", "biz", "audit"].includes(startTab) && startTab !== "tmr") showTab(startTab);
 </script>
 <script>
 // ---------------- IEX tab: how the Day-Ahead auction works (real slot figures from iex.js)
@@ -696,6 +696,7 @@ const startTab = location.hash.replace("#", ""); if (["tmr", "replay", "proof", 
   $("iex_eve").onclick = () => { k = 76; draw(); };
   $("iex_go").onclick = () => showTab("tmr");
   document.querySelector('#tabs button[data-t="iex"]').addEventListener("click", () => setTimeout(() => { draw(); bind(); }, 40));
+  if (location.hash === "#iex") setTimeout(() => { draw(); bind(); }, 60);
 })();
 </script>
 </body>
