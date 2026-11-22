@@ -117,6 +117,10 @@ details summary { cursor:pointer; list-style:none; } details summary::-webkit-de
 .ok { background:#10b981; } .warn { background:#f59e0b; } .bad { background:#ef4444; }
 .pnl td { padding:8px 6px; } .pnl tr.tot td { font-weight:800; border-top:2px solid var(--ink); }
 .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:.78rem; font-weight:700; } .b-ok { background:#d1fae5; color:#047857; } .b-rev { background:#fee2e2; color:#b91c1c; }
+/* minimal mode: titles, numbers, charts and one-line outcomes only */
+.pline, .how, section:not(#tmr) > .lede, .flow, #daycases + .top .pline { display:none !important; }
+.panel .ptitle { margin-bottom:8px; }
+.panel:has(.flow) { display:none !important; } .g2:has(.flow) { grid-template-columns:1fr !important; }
 .fade { animation: fade .35s ease; } @keyframes fade { from { opacity:.3; } to { opacity:1; } }
 @media (max-width:1100px) { .money { grid-template-columns:1fr 1fr; } .top, .g2, .g3 { grid-template-columns:1fr; } .kpis { grid-template-columns: repeat(3,1fr); } .how { grid-template-columns:1fr 1fr; } }
 </style>
