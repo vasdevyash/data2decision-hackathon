@@ -18,6 +18,7 @@
 # 8. Four kinds of days
 # 9. Price "moods" that last for months
 # 10. A forecasting model from research vs the simple guesses
+# 11. Two stronger forecasters: a better research model and an AI model
 #
 # Each step starts with **What we ask**, then the code, then **What we see**. All charts are also saved in `outputs/figures/`.
 
@@ -482,6 +483,94 @@ fig.tight_layout(); fig.savefig(FIG / "m3_lear.png", dpi=250); plt.show()
 
 # %%
 M["test_ladder_2c"] = {k: round(float(v)) for k, v in zip(labels, vals)}
+
+# %% [markdown]
+# ## 11. Two stronger forecasters: a better research model and an AI foundation model
+#
+# **What we ask:** can we do better than the research model above, and does a ready-made AI model help?
+#
+# - **LEAR ensemble.** The same research model, done the way the paper recommends: four versions trained on
+#   different amounts of history (56, 84, 364 and 728 days), averaged, and re-trained every week.
+#   Built by `src/forecast.py`.
+# - **Chronos.** A ready-made AI forecasting model from Amazon, trained on many kinds of time series
+#   (Ansari et al., 2024). We use it **as it comes, with no training on Indian data**: it reads the last
+#   three weeks of prices and guesses tomorrow. Built by `src/chronos_fc.py`.
+# - **Blend.** A mix of the two. The mix is chosen on the validation year by **money earned**, then tested on
+#   the test year it has never seen.
+#
+# Both scripts take a few minutes, so this notebook reads their saved forecasts from `outputs/forecasts/`.
+
+# %%
+fz = np.load(ROOT / "outputs/forecasts/lear_ens.npz"); cz = np.load(ROOT / "outputs/forecasts/chronos.npz")
+d_l = pd.to_datetime(fz["days"]); d_c = pd.to_datetime(cz["days"]); common = d_l.intersection(d_c)
+FL = pd.DataFrame(fz["ens"], index=d_l).loc[common].values
+FC = pd.DataFrame(cz["quantiles"][:, :, 4], index=d_c).loc[common].values   # Chronos median
+act = P.loc[common].values; capm = CAP.loc[common].values
+
+def run_plan(F, tag):
+    out = []
+    for i, day in enumerate(common):
+        r = {"d": day}
+        for cyc in (1, 2): c, d = bt.solve(F[i], DEG, cyc); r[f"{tag}_{cyc}"] = bt.settle(c, d, act[i], DEG)
+        out.append(r)
+    return pd.DataFrame(out).set_index("d")
+
+E = run_plan(FL, "ens").join(run_plan(FC, "chr"))
+# blend weight on LEAR ensemble, chosen on the validation year by profit (up to 2 rounds)
+val_days = common[common < "2025-11-22"]; grid_w = np.round(np.arange(0, 1.01, 0.1), 1); vprof = {}
+for w in grid_w:
+    Fb = w * FL[:len(val_days)] + (1 - w) * FC[:len(val_days)]
+    vprof[w] = np.mean([bt.settle(*bt.solve(Fb[i], DEG, 2), act[i], DEG) for i in range(len(val_days))])
+W_BEST = float(max(vprof, key=vprof.get))
+E = E.join(run_plan(W_BEST * FL + (1 - W_BEST) * FC, "blend"))
+R = R.drop(columns=[c for c in R.columns if c.split("_")[0] in ("ens", "chr", "blend")], errors="ignore").join(E)
+
+mae = lambda F: round(float(np.abs(F - act)[~capm].mean()))
+up = {"mae": {"ens": mae(FL), "chr": mae(FC), "blend": mae(W_BEST * FL + (1 - W_BEST) * FC),
+              "lag1": round(float(np.abs(P.shift(1).loc[common].values - act)[~capm].mean()))},
+      "blend_weight_lear": W_BEST, "val_profit_by_weight": {str(k): round(float(v)) for k, v in vprof.items()}}
+for sp in ["validate", "test"]:
+    r = R[R.split == sp]
+    for tag in ["ens", "chr", "blend"]:
+        for cyc in (1, 2):
+            dlt = r[f"{tag}_{cyc}"] - r[f"lag1_{cyc}"]; lo, hi = week_bootstrap(dlt); st_, pv = dm_test(dlt.values)
+            up.setdefault(sp, {})[f"{tag}_{cyc}"] = {"mean": round(float(r[f"{tag}_{cyc}"].mean())), "gain_vs_lag1": round(float(dlt.mean())),
+                "ci": [round(lo), round(hi)], "p": round(pv, 5), "capture": round(float(r[f"{tag}_{cyc}"].sum() / r[f"hind{cyc}"].sum()), 3)}
+    d_ = r["blend_2"] - r["lear_2"]; st_, pv = dm_test(d_.values)
+    up[sp]["blend_vs_lear_monthly_2"] = {"gain": round(float(d_.mean())), "p": round(pv, 5)}
+M["upgrades"] = up
+table_up = pd.DataFrame({k: {"₹/day (1 round)": v[f"{k}_1"]["mean"], "extra vs tomorrow=today": v[f"{k}_1"]["gain_vs_lag1"],
+                             "share of best": v[f"{k}_1"]["capture"]} for k, v in [(t, up["test"]) for t in ["ens", "chr", "blend"]]}).T
+table_up.index = ["LEAR ensemble", "Chronos (AI, as-is)", f"Blend ({W_BEST:.0%} LEAR)"]
+display(table_up)
+print("price error on uncapped blocks, ₹/MWh:", up["mae"])
+
+# %%
+fig, axs = plt.subplots(1, 2, figsize=(7.4, 2.45), gridspec_kw={"width_ratios": [1.5, 1]})
+oos = R[R.split != "train"].copy()
+for col, lbl, c in [("blend_2", "Blend of LEAR ensemble + Chronos", ACC), ("ens_2", "LEAR ensemble", "#6b8fc2"),
+                    ("chr_2", "Chronos (AI, no training on Indian data)", "#c0392b"), ("lear_2", "LEAR, simple version (section 10)", "0.6")]:
+    axs[0].plot(oos.index, (oos[col] - oos.lag1_2).cumsum() / 1e7, color=c, lw=1.5, label=lbl)
+axs[0].axhline(0, color="0.7", lw=0.6); axs[0].axvline(pd.Timestamp("2025-11-22"), color="0.75", lw=0.6)
+axs[0].text(pd.Timestamp("2025-11-29"), 0.01, "test year", fontsize=7, color="0.35")
+axs[0].set_ylabel("₹ crore, adding up"); axs[0].set_title("Extra money over tomorrow = today (up to 2 rounds)")
+axs[0].legend(frameon=False, fontsize=6.6, loc="upper left")
+axs[0].xaxis.set_major_locator(matplotlib.dates.MonthLocator(bymonth=[1, 4, 7, 10])); axs[0].xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%b %y")); axs[0].tick_params(axis="x", labelsize=7)
+tst = R[R.split == "test"]
+pts = [("Tomorrow = today", up["mae"]["lag1"], tst.lag1_1.mean(), "0.45"), ("LEAR ensemble", up["mae"]["ens"], tst.ens_1.mean(), "#6b8fc2"),
+       ("Chronos", up["mae"]["chr"], tst.chr_1.mean(), "#c0392b"), ("Blend", up["mae"]["blend"], tst.blend_1.mean(), ACC)]
+for lbl, x_, y_, c in pts:
+    axs[1].scatter(x_, y_ / 1000, s=40, color=c, zorder=3); axs[1].annotate(lbl, (x_, y_ / 1000), textcoords="offset points", xytext=(6, -3), fontsize=7)
+axs[1].set_xlabel("average price error, ₹/MWh (lower is better)"); axs[1].set_ylabel("₹ thousand/day, 1 round")
+axs[1].set_title("Price error vs money earned, test year")
+xs = [p[1] for p in pts]; axs[1].set_xlim(min(xs) - 40, max(xs) + 110)
+fig.tight_layout(); fig.savefig(FIG / "m3_models.png", dpi=250); plt.show()
+
+# %% [markdown]
+# **What we see:** both new forecasters beat *tomorrow = today*, and the blend does best. The surprise is Chronos:
+# its price guesses are **no more accurate** than simply copying yesterday, yet it **earns more money**,
+# because it gets the **shape** of the day right (which hours are cheapest and dearest), and the shape is what
+# the battery trades on. Lesson: judge a forecaster by the money its plan makes, not by its price error.
 
 # %% [markdown]
 # ## What we learned

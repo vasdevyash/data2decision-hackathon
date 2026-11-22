@@ -61,6 +61,7 @@ wv, wt = M["weekday_gain"]["validate"], M["weekday_gain"]["test"]
 cv, ct = M["conditional_cycling"]["validate"], M["conditional_cycling"]["test"]
 sc, an, q, dtp = M["second_cycle"], M["anomalies"], M["quality"], M["day_types"]
 dow = M["test_by_dow_lag1_capture"]
+U = M["upgrades"]; ut, uv = U["test"], U["validate"]; WB = U["blend_weight_lear"]
 types = M["day_type_order"]; tab = dtp["table"]
 dbl = next(t for t in types if t.startswith("Double")); scarce = next(t for t in types if t.startswith("Scarce"))
 others_v2 = [tab[t]["v2_hind"] for t in types if t != dbl]
@@ -77,8 +78,10 @@ s.append(Paragraph("What we found", H))
 summary = [
     f"<b>The fixed timetable in the canvas leaves a lot of money on the table.</b> Simply assuming <i>tomorrow = today</i> earns ₹{n(bt['lag1_1'] - bt['fixed'])} "
     f"a day more on the test year ({pc(bt['cap_lag1_1'], 0)} of the most anyone could earn, against {pc(bt['cap_fixed'], 0)}).",
-    f"<b>A forecasting model from research does even better.</b> LEAR, the standard model recommended by a leading review (Lago et al., 2021), adds "
-    f"₹{n(lt['lear_1']['gain_vs_lag1'])} a day on top, reaching {pc(lt['lear_1']['capture'], 0)}. The gain holds on two separate years and is very unlikely to be luck.",
+    f"<b>Better forecasts earn more, and a ready-made AI model holds its own.</b> Three forecasters all beat <i>tomorrow = today</i> on the test year: "
+    f"LEAR, the standard research model (Lago et al., 2021), +₹{n(lt['lear_1']['gain_vs_lag1'])} a day; Chronos, Amazon's AI forecasting model used as it comes "
+    f"with no training on Indian data, +₹{n(ut['chr_1']['gain_vs_lag1'])}; and a blend of the two, +₹{n(ut['blend_1']['gain_vs_lag1'])}, reaching "
+    f"{pc(ut['blend_1']['capture'])} of the most anyone could earn. Every gain is very unlikely to be luck; the three are close to each other.",
     f"<b>The biggest lever is a second buy-sell round each day, but only in winter.</b> On winter days with a morning and an evening peak it is worth "
     f"₹{n(tab[dbl]['v2_hind'])} a day; in March–June it earns nothing.",
     f"<b>Sundays break the simple guess.</b> Sunday looks nothing like Saturday, so <i>tomorrow = today</i> gets only {pc(dow['Sun'], 0)} on Sundays. Copying last "
@@ -131,42 +134,48 @@ s.append(KeepTogether([fig("m3_second_cycle.png"), Paragraph(
 s.append(Paragraph("5. Simple guesses vs a forecasting model", H))
 s.append(Paragraph(
     "Every plan is run on every day and paid at the real prices, with the same battery and wear cost. LEAR learns from the last few days' prices, "
-    "the weekday and holidays, with one small model per 15-minute slot. To check that a gain is real and not luck we use two standard tests: resampling "
+    "the weekday and holidays, with one small model per 15-minute slot. The <b>LEAR ensemble</b> averages four versions trained on 56, 84, 364 and "
+    "728 days of history, as the paper recommends. <b>Chronos</b> (Ansari et al., 2024) reads the last three weeks of prices and guesses tomorrow, "
+    f"untrained on our data. The <b>blend</b> is {WB:.0%} LEAR ensemble and {1 - WB:.0%} Chronos, a mix picked on the validation year by money earned. To check that a gain is real and not luck we use two standard tests: resampling "
     f"whole weeks (Künsch, 1989) and the Diebold–Mariano test (1995). LEAR's guesses are off by ₹{n(M['lear']['lear']['mae_uncapped'])}/MWh on average, "
     f"against ₹{n(M['lear']['mae_lag1_uncapped'])} for <i>tomorrow = today</i>.", B))
-s.append(KeepTogether([fig("m3_lear.png"), Paragraph(
-    "Figure 6. Left: extra money earned over <i>tomorrow = today</i>, adding up day by day over two years; the research model pulls ahead steadily. "
-    "Right: average money per day on the test year for each plan.", CAP)]))
+s.append(KeepTogether([fig("m3_models.png"), Paragraph(
+    f"Figure 6. Left: extra money over <i>tomorrow = today</i>, adding up day by day over two years. Right: price error against money earned. "
+    f"Chronos guesses prices no better than copying yesterday (₹{n(U['mae']['chr'])} vs ₹{n(U['mae']['lag1'])}/MWh off on average) yet earns more, because it gets "
+    "the shape of the day right, and the shape is what the battery trades on.", CAP)]))
 rows = [["Plan", "Validation year, ₹/day (share of best)", "Test year, ₹/day (share of best)", "Extra vs tomorrow = today, test (95% range)", "Chance it is luck"]]
 rows += [
     ["Fixed timetable (canvas), 1 round", f"{n(bv['fixed'])} ({pc(bv['cap_fixed'])})", f"{n(bt['fixed'])} ({pc(bt['cap_fixed'])})",
      f"−{n(bt['lag1_1'] - bt['fixed'])} ({ci([-bt['lag1_vs_fixed_ci'][1], -bt['lag1_vs_fixed_ci'][0]])})", "–"],
     ["Same day last week, 1 round", f"{n(bv['lag7_1'])} ({pc(bv['cap_lag7_1'])})", f"{n(bt['lag7_1'])} ({pc(bt['cap_lag7_1'])})", f"−{n(bt['lag1_1'] - bt['lag7_1'])}", "–"],
     ["Tomorrow = today, 1 round", f"{n(bv['lag1_1'])} ({pc(bv['cap_lag1_1'])})", f"{n(bt['lag1_1'])} ({pc(bt['cap_lag1_1'])})", "reference", "–"],
-    ["<b>LEAR model, 1 round</b>", f"{n(lv['lear_1']['mean'])} ({pc(lv['lear_1']['capture'])})", f"<b>{n(lt['lear_1']['mean'])}</b> ({pc(lt['lear_1']['capture'])})",
+    ["LEAR model, 1 round", f"{n(lv['lear_1']['mean'])} ({pc(lv['lear_1']['capture'])})", f"{n(lt['lear_1']['mean'])} ({pc(lt['lear_1']['capture'])})",
      f"+{n(lt['lear_1']['gain_vs_lag1'])} ({ci(lt['lear_1']['ci'])})", pv(lt["lear_1"]["p"])],
+    ["LEAR ensemble, 1 round", f"{n(uv['ens_1']['mean'])} ({pc(uv['ens_1']['capture'])})", f"{n(ut['ens_1']['mean'])} ({pc(ut['ens_1']['capture'])})", f"+{n(ut['ens_1']['gain_vs_lag1'])} ({ci(ut['ens_1']['ci'])})", pv(ut['ens_1']['p'])],
+    ["Chronos (AI, as it comes), 1 round", f"{n(uv['chr_1']['mean'])} ({pc(uv['chr_1']['capture'])})", f"{n(ut['chr_1']['mean'])} ({pc(ut['chr_1']['capture'])})", f"+{n(ut['chr_1']['gain_vs_lag1'])} ({ci(ut['chr_1']['ci'])})", pv(ut['chr_1']['p'])],
+    ["<b>Blend, 1 round</b>", f"{n(uv['blend_1']['mean'])} ({pc(uv['blend_1']['capture'])})", f"{n(ut['blend_1']['mean'])} ({pc(ut['blend_1']['capture'])})", f"+{n(ut['blend_1']['gain_vs_lag1'])} ({ci(ut['blend_1']['ci'])})", pv(ut['blend_1']['p'])],
     ["Tomorrow = today, up to 2 rounds", f"{n(bv['lag1_2'])} ({pc(bv['cap_lag1_2'])})", f"{n(bt['lag1_2'])} ({pc(bt['cap_lag1_2'])})", "reference (2 cycles)", "–"],
     ["Sunday fix + smart 2nd round", f"{n(cv['mean'])} ({pc(cv['capture'])})", f"{n(ct['mean'])} ({pc(ct['capture'])})", f"+{n(ct['gain_vs_lag1_2'])} ({ci(ct['ci'])})", "–"],
-    ["<b>LEAR model, up to 2 rounds</b>", f"{n(lv['lear_2']['mean'])} ({pc(lv['lear_2']['capture'])})", f"<b>{n(lt['lear_2']['mean'])}</b> ({pc(lt['lear_2']['capture'])})",
+    ["LEAR model, up to 2 rounds", f"{n(lv['lear_2']['mean'])} ({pc(lv['lear_2']['capture'])})", f"{n(lt['lear_2']['mean'])} ({pc(lt['lear_2']['capture'])})",
      f"+{n(lt['lear_2']['gain_vs_lag1'])} ({ci(lt['lear_2']['ci'])})", pv(lt["lear_2"]["p"])],
-    ["LEAR model without weather, up to 2 rounds", f"{n(lv['lear_nowx_2']['mean'])} ({pc(lv['lear_nowx_2']['capture'])})", f"{n(lt['lear_nowx_2']['mean'])} ({pc(lt['lear_nowx_2']['capture'])})",
-     f"+{n(lt['lear_nowx_2']['gain_vs_lag1'])} ({ci(lt['lear_nowx_2']['ci'])})", pv(lt["lear_nowx_2"]["p"])],
+    ["Chronos, up to 2 rounds", f"{n(uv['chr_2']['mean'])} ({pc(uv['chr_2']['capture'])})", f"{n(ut['chr_2']['mean'])} ({pc(ut['chr_2']['capture'])})", f"+{n(ut['chr_2']['gain_vs_lag1'])} ({ci(ut['chr_2']['ci'])})", pv(ut['chr_2']['p'])],
+    ["<b>Blend, up to 2 rounds</b>", f"{n(uv['blend_2']['mean'])} ({pc(uv['blend_2']['capture'])})", f"{n(ut['blend_2']['mean'])} ({pc(ut['blend_2']['capture'])})", f"+{n(ut['blend_2']['gain_vs_lag1'])} ({ci(ut['blend_2']['ci'])})", pv(ut['blend_2']['p'])],
     ["Perfect guess, 1 / up to 2 rounds (ceiling)", f"{n(bv['hind1'])} / {n(bv['hind2'])}", f"{n(bt['hind1'])} / {n(bt['hind2'])}", "not tradable", "–"],
 ]
 s.append(table(rows, [52, 33, 31, 47, 17]))
 
-s.append(KeepTogether([fig("m3_weather.png", 170), Paragraph(
-    "Figure 7. Day-to-day change in noon price against change in forecast sunshine (left), and in evening price against forecast evening "
-    "temperature (right). The dots form a flat cloud: weather barely moves the price from one day to the next. The day of the week explains "
-    f"{pc(M['weather']['evening']['r2_oos_calendar_only'], 0)} of evening price changes; adding weather adds nothing.", CAP)]))
+s.append(Paragraph(f"<b>Weather.</b> Day-to-day changes in forecast sunshine and temperature barely move prices (correlations "
+    f"{str(round(M['corr_dsolar_dmidday'][0], 2)).replace('-', '−')} and {str(round(M['corr_dtemp_devening'][0], 2)).replace('-', '−')}), and LEAR earns the same "
+    f"with or without weather (₹{n(lt['lear_nowx_2']['mean'])} vs ₹{n(lt['lear_2']['mean'])} a day), so we leave it out. The chart is in the notebook.", B))
 s.append(Paragraph("6. Limits, and what we do next (M4)", H))
 lim = [
     "<b>Limits.</b> We use one all-India price. The ₹10,000 cap hides how scarce power really was. Our past weather forecasts are short-range, so "
     "real day-ahead forecasts would help even less. We test on one year, and exchange fees (about ₹1,000 a day) are left out.",
-    "<b>Next, at M4.</b> (1) Make LEAR re-learn every day instead of every month, as the original paper does. (2) Train the model on the money it "
-    "makes rather than on how close its prices are, an idea called decision-focused learning (Elmachtoub and Grigas, 2022; Sang et al., 2023). "
-    "(3) Try Chronos, a ready-made AI forecasting model trained on many kinds of time series (Ansari et al., 2024), as a challenger. "
-    "(4) Decide each day whether to run one round or two. Every option is judged by money earned on the test year."
+    f"<b>Honest caveats.</b> The blend beats the plain LEAR model by only ₹{n(ut['blend_vs_lear_monthly_2']['gain'])} a day on the test year, too little to "
+    "be sure it is real. The four-window LEAR ensemble did not beat the simpler monthly version here.",
+    "<b>Next, at M4.</b> (1) Train the forecaster on the money it makes rather than on how close its prices are, an idea called decision-focused "
+    "learning (Elmachtoub and Grigas, 2022; Sang et al., 2023). (2) Use Chronos's range of possible prices, not just its middle guess, to decide each "
+    "day whether to run one round or two. (3) Fine-tune Chronos on Indian prices. Every option is judged by money earned on the test year."
 ]
 for t in lim:
     s.append(Paragraph(t, B))
