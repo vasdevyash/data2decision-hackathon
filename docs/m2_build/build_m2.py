@@ -6,20 +6,25 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Image, Spacer, KeepTogether
 
-F = "/System/Library/Fonts/Supplemental/"
-pdfmetrics.registerFont(TTFont("G", F + "Georgia.ttf"))
-pdfmetrics.registerFont(TTFont("GB", F + "Georgia Bold.ttf"))
-pdfmetrics.registerFont(TTFont("GI", F + "Georgia Italic.ttf"))
+from reportlab.lib.colors import HexColor
+
+# Helvetica Neue: lining numerals and a native ₹ sign (Georgia's old-style numerals made "D01" read as "Do1")
+HN = "/System/Library/Fonts/HelveticaNeue.ttc"
+pdfmetrics.registerFont(TTFont("G", HN, subfontIndex=0))
+pdfmetrics.registerFont(TTFont("GB", HN, subfontIndex=1))
+pdfmetrics.registerFont(TTFont("GI", HN, subfontIndex=2))
 pdfmetrics.registerFontFamily("G", normal="G", bold="GB", italic="GI", boldItalic="GB")
+INK, SOFT = HexColor("#1a1a1a"), HexColor("#555555")
 
 out, fig1, fig2 = sys.argv[1:4]
-B = ParagraphStyle("b", fontName="G", fontSize=9, leading=12, spaceAfter=3)
-H = ParagraphStyle("h", fontName="GB", fontSize=10.5, leading=13, spaceBefore=7, spaceAfter=3, keepWithNext=1)
-T = ParagraphStyle("t", fontName="GB", fontSize=13, leading=16, spaceAfter=2)
-S = ParagraphStyle("s", fontName="G", fontSize=8.5, leading=11)
+B = ParagraphStyle("b", fontName="G", fontSize=8.5, leading=11.4, spaceAfter=2.6, textColor=INK)
+H = ParagraphStyle("h", fontName="GB", fontSize=10.2, leading=12.5, spaceBefore=7, spaceAfter=2.6, keepWithNext=1, textColor=INK)
+T = ParagraphStyle("t", fontName="GB", fontSize=15, leading=18, spaceAfter=2, textColor=INK)
+SUB = ParagraphStyle("sub", fontName="G", fontSize=8.5, leading=11, spaceAfter=2, textColor=SOFT)
+S = ParagraphStyle("s", fontName="G", fontSize=8, leading=10.1, textColor=INK)
 SB = ParagraphStyle("sb", parent=S, fontName="GB")
-CAP = ParagraphStyle("cap", fontName="GI", fontSize=8, leading=10, spaceAfter=4)
-BL = ParagraphStyle("bl", parent=B, leftIndent=9, bulletIndent=0, spaceAfter=1.5)
+CAP = ParagraphStyle("cap", fontName="GI", fontSize=7.6, leading=9.6, spaceBefore=0.5, spaceAfter=3, textColor=SOFT)
+BL = ParagraphStyle("bl", parent=B, leftIndent=10, bulletIndent=1, spaceAfter=2)
 P = lambda s: Paragraph(s, B)
 bul = lambda s: Paragraph(s, BL, bulletText="•")
 
@@ -28,13 +33,13 @@ def plain(rows, widths):
     data = [[Paragraph(c, SB if i == 0 else S) for c in r] for i, r in enumerate(rows)]
     t = Table(data, colWidths=[w * mm for w in widths])
     t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                           ("RIGHTPADDING", (0, 0), (-1, -1), 6), ("TOPPADDING", (0, 0), (-1, -1), 1.5),
-                           ("BOTTOMPADDING", (0, 0), (-1, -1), 1.5)]))
+                           ("RIGHTPADDING", (0, 0), (-1, -1), 8), ("TOPPADDING", (0, 0), (-1, -1), 1.3),
+                           ("BOTTOMPADDING", (0, 0), (-1, -1), 1.3), ("BOTTOMPADDING", (0, 0), (-1, 0), 3)]))
     return t
 
 
 s = [Paragraph("M2 FIND · Data Note: Battery Dispatch Against Day-Ahead Prices", T),
-     P("Team D01 · Energy &amp; Renewables · Data and code: github.com/vasdevyash/data2decision-hackathon")]
+     Paragraph("Team D01 · Energy &amp; Renewables · Data and code: github.com/vasdevyash/data2decision-hackathon", SUB)]
 
 s.append(Paragraph("1. The problem we received, and how we sharpened it", H))
 s.append(P("<b>Received:</b> help the trading head of a battery storage operator decide when to charge and discharge a 20 MWh battery each day "
@@ -76,7 +81,7 @@ s.append(plain([
     ["congestion", "Whether regional congestion split the market", "Limitation flag"],
 ], [52, 56, 70]))
 
-s.append(KeepTogether([Image(fig1, width=178 * mm, height=62 * mm),
+s.append(KeepTogether([Image(fig1, width=168 * mm, height=58.5 * mm),
                        Paragraph("Figure 1. Average price through the day, most recent year. It falls to about ₹1,570 at 1 pm (solar) and peaks near ₹8,000 at "
                                  "7 pm: the gap the battery earns from. Shaded: the canvas's fixed charging and discharging windows.", CAP)]))
 
@@ -92,7 +97,7 @@ s.append(bul("<b>Share of the profit gap closed</b> between the yesterday's-pric
 s.append(bul("<b>Extra profit from the second cycle</b> = profit with 2 cycles − profit with 1, after wear. A second cycle pays only if this is positive "
              "(about ₹19,000 a day using yesterday's prices)."))
 s.append(bul("<b>Worst 5% of days</b>, because a trader is judged on bad days too."))
-s.append(KeepTogether([Image(fig2, width=178 * mm, height=54 * mm),
+s.append(KeepTogether([Image(fig2, width=168 * mm, height=51 * mm),
                        Paragraph("Figure 2. Average daily trading profit over the most recent year for each schedule (battery limits and wear identical). "
                                  "Perfect foresight cannot be traded; it only shows the ceiling. Using yesterday's prices with up to 2 cycles earns ₹121,401 a day, "
                                  "₹4.43 crore a year, after wear.", CAP)]))
@@ -119,5 +124,5 @@ s.append(P("The data matches the decision exactly: the same market, the same 15-
 s.append(Paragraph("Sources: IEX Day-Ahead Market snapshot (iexindia.com/market-data/day-ahead-market/market-snapshot); CERC price-ceiling order (April 2023); CERC and APTEL on market coupling (2025–26); "
                    "IEEFA–JMK Research on 2025 battery awards; CTUIL benchmark battery cost (2025).", S))
 
-SimpleDocTemplate(out, pagesize=A4, leftMargin=16 * mm, rightMargin=16 * mm, topMargin=12 * mm, bottomMargin=11 * mm,
+SimpleDocTemplate(out, pagesize=A4, leftMargin=15 * mm, rightMargin=15 * mm, topMargin=11 * mm, bottomMargin=10 * mm,
                   title="D01 M2 Data Note", author="Team D01", creator="Team D01", producer="Team D01").build(s)
