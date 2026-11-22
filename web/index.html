@@ -82,6 +82,22 @@ table { width:100%; border-collapse:collapse; font-size:.86rem; } th, td { paddi
 .chip:hover { border-color:var(--blue); color:var(--blue); } .chip.on { background:var(--blue); border-color:var(--blue); color:#fff; }
 .take { margin-top:6px; padding:9px 12px; background:#f0f7ff; border-radius:10px; font-size:.88rem; color:#1e3a8a; font-weight:500; }
 .take b { color:#0b1220; }
+body { font-size:15.5px; line-height:1.5; } :root { --muted:#4b5563; }
+.links { display:flex; gap:4px; } .links a { color:var(--muted); text-decoration:none; font-weight:600; font-size:.95rem; padding:8px 12px; border-radius:9px; } .links a:hover { background:var(--soft); color:var(--ink); }
+section { padding: 28px 0 8px; scroll-margin-top: 70px; }
+.eyebrow { color:var(--blue); font-weight:700; font-size:.82rem; letter-spacing:.08em; text-transform:uppercase; }
+h1 { font-size:2.15rem; line-height:1.22; margin:8px 0 10px; letter-spacing:-.02em; } h2 { font-size:1.55rem; margin:24px 0 6px; letter-spacing:-.01em; }
+.lede { color:var(--muted); font-size:1.06rem; margin:0 0 14px; max-width:920px; line-height:1.6; }
+.row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; } .mut { color:var(--muted); font-size:.95rem; }
+.btn.big { padding:12px 20px; font-size:1rem; border-radius:12px; }
+.how { color:var(--muted); font-size:.95rem; margin:16px 0 0; line-height:1.6; }
+.ptitle { font-size:1.05rem !important; } .pline { font-size:.92rem !important; }
+.lrow { font-size:.98rem !important; } .kpi .k { font-size:.84rem !important; } .kpi .s { font-size:.82rem !important; } .take { font-size:.95rem !important; }
+.chip { font-size:.9rem !important; padding:7px 14px !important; }
+details summary { cursor:pointer; list-style:none; } details summary::-webkit-details-marker { display:none; } details summary:after { content:" ▾"; color:var(--muted); }
+.drawer { position:fixed; top:62px; right:0; width:390px; max-width:92vw; height:calc(100vh - 62px); background:#fff; border-left:1px solid var(--line); box-shadow:-12px 0 30px rgba(0,0,0,.08); padding:18px; z-index:30; transform:translateX(105%); transition:transform .3s ease; overflow:auto; }
+.drawer.open { transform:none; } .dhead { display:flex; justify-content:space-between; align-items:center; }
+.kpis { grid-template-columns: repeat(4, 1fr) !important; } .money { grid-template-columns: 1.4fr 1fr 1fr 1fr !important; }
 .fade { animation: fade .35s ease; } @keyframes fade { from { opacity:.3; } to { opacity:1; } }
 @media (max-width:1100px) { .money { grid-template-columns:1fr 1fr; } .top, .g2, .g3 { grid-template-columns:1fr; } .kpis { grid-template-columns: repeat(3,1fr); } .how { grid-template-columns:1fr 1fr; } }
 </style>
@@ -89,101 +105,88 @@ table { width:100%; border-collapse:collapse; font-size:.86rem; } th, td { paddi
 <body>
 <header><div class="hbar">
   <div class="brand">Battery <span>Copilot</span></div>
-  <div class="seg" id="mode"><button data-m="replay" class="on">Replay a real day</button><button data-m="tomorrow">Tomorrow's plan</button></div>
+  <nav class="links"><a href="#tmr">Tomorrow's plan</a><a href="#replay">Replay a day</a><a href="#proof">Proof</a></nav>
   <div class="spacer"></div>
-  <div class="datebox" id="datebox"><button id="prevd" title="Previous day">‹</button><input type="date" id="datein"><button id="nextd" title="Next day">›</button></div>
+  <button class="btn" id="openset">Battery settings</button>
 </div></header>
 
+<div class="drawer" id="drawer">
+  <div class="dhead"><div class="ptitle">Battery settings</div><button class="btn" id="closeset">Done</button></div>
+  <div class="pline">Pick a battery or fine-tune it. Every plan on the page re-optimises instantly.</div>
+  <div id="battcases" style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 14px"></div>
+  <div class="settings">
+    <div><label>Power <output id="o_mw"></output></label><input id="mw" type="range" min="5" max="50" step="5" value="10"></div>
+    <div><label>Storage <output id="o_h"></output></label><input id="h" type="range" min="1" max="4" step="1" value="2"></div>
+    <div><label>Efficiency <output id="o_rte"></output></label><input id="rte" type="range" min="80" max="95" step="1" value="88"></div>
+    <div><label>Wear per MWh <output id="o_wear"></output></label><input id="wear" type="range" min="0" max="2000" step="100" value="1000"></div>
+    <div><label>Fee per MWh <output id="o_fee"></output></label><input id="fee" type="range" min="0" max="50" step="5" value="0"></div>
+    <div><label>Safety price limits <output id="o_guard">on</output></label><input id="guard" type="range" min="0" max="1" step="1" value="1"></div>
+  </div>
+</div>
+
 <main>
-  <div class="money" id="money"></div>
-  <div class="cases">
-    <div><span class="clab">Try a day</span><span id="daycases"></span></div>
-    <div><span class="clab">Try a battery</span><span id="battcases"></span></div>
-  </div>
-  <div class="top">
-    <div class="panel">
-      <div class="ptitle">Live trading day</div>
-      <div class="pline" id="topline">Press play to watch the battery trade a real day, slot by slot, at real prices.</div>
-      <div class="sky" id="sky">
-        <div class="orb" id="orb"></div>
-        <div class="skytext"><div class="clock mono" id="clock">00:00</div><div class="daylab" id="daylab"></div></div>
-        <div class="pricechip"><div class="p mono" id="nowprice">₹0</div><div class="l" id="nowpl">price now, per MWh</div></div>
-        <div class="action" id="action"><span class="dot"></span>Waiting</div>
-      </div>
-      <div class="ctrl">
-        <button class="play" id="play">Play</button>
-        <input type="range" id="scrub" min="0" max="96" value="0" title="Drag to move through the day">
-        <select id="speed" title="Playback speed"><option value="260">1×</option><option value="110" selected>2×</option><option value="40">5×</option></select>
-        <select id="strat" title="Which plan the battery follows"><option value="copilot">Copilot plan</option><option value="yday">Copy yesterday</option><option value="fixed">Fixed timetable</option><option value="perfect">Perfect hindsight</option></select>
-      </div>
-      <div id="chart_main" class="chart" style="height:430px"></div>
-      <div class="take" id="take_main"></div>
-    </div>
+  <section id="tmr">
+    <div class="eyebrow" id="t_eyebrow">Tomorrow</div>
+    <h1 id="t_head">Tomorrow's plan</h1>
+    <p class="lede" id="t_sub"></p>
+    <div class="row" style="margin-bottom:18px"><button class="btn primary big" id="dl">Download tomorrow's orders</button><button class="btn big" id="openset2">Change the battery</button><span class="mut" id="ocount"></span></div>
+    <div class="money" id="money"></div>
+    <div class="panel"><div class="ptitle">Tomorrow's prices and the plan</div><div class="pline">Blue: forecast price with its likely range. Green bars: buy. Red bars: sell. Dotted line: energy stored.</div>
+      <div id="chart_t" style="height:440px"></div></div>
+    <details class="panel" style="margin-top:14px"><summary class="ptitle">See all orders</summary>
+      <div class="pline" style="margin-top:8px">One order per 15-minute block, with a safety price limit from the forecast range.</div>
+      <div class="scroll"><table id="orders"></table></div></details>
+    <p class="how">How it works: two forecasting models (LEAR, a research model, and Chronos, a deep-learning model) predict all 96 of tomorrow's prices; an optimiser picks the most profitable buy and sell plan within the battery's limits. <span id="proofline"></span></p>
+  </section>
 
-    <div class="panel">
-      <div class="ptitle">Battery</div>
-      <div class="pline">How full it is, and what it is doing right now.</div>
-      <div class="batt">
-        <div class="cell"><div class="fill" id="fill"></div></div>
-        <div><div class="socv mono" id="socp">10%</div><div id="socm" style="color:var(--muted);font-size:.86rem">2.0 of 20 MWh</div><div class="stat" id="stat">Waiting</div></div>
+  <section id="replay">
+    <h2>See it trade a real day</h2>
+    <p class="lede">Pick a day and press play. The battery follows the plan made the night before and is paid at the real prices. Switch the plan to compare strategies.</p>
+    <div id="daycases" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+    <div class="top">
+      <div class="panel">
+        <div class="sky" id="sky">
+          <div class="orb" id="orb"></div>
+          <div class="skytext"><div class="clock mono" id="clock">00:00</div><div class="daylab" id="daylab"></div></div>
+          <div class="pricechip"><div class="p mono" id="nowprice">₹0</div><div class="l" id="nowpl">price now, per MWh</div></div>
+          <div class="action" id="action"><span class="dot"></span>Waiting</div>
+        </div>
+        <div class="ctrl">
+          <button class="play" id="play">Play</button>
+          <input type="range" id="scrub" min="0" max="96" value="0" title="Drag to move through the day">
+          <select id="speed" title="Playback speed"><option value="260">1×</option><option value="110" selected>2×</option><option value="40">5×</option></select>
+          <select id="strat" title="Which plan the battery follows"><option value="copilot">Copilot plan</option><option value="yday">Copy yesterday</option><option value="fixed">Fixed timetable</option><option value="perfect">Perfect hindsight</option></select>
+          <input type="date" id="datein" title="Any day">
+        </div>
+        <div id="chart_main" class="chart" style="height:400px"></div>
+        <div class="take" id="take_main"></div>
       </div>
-      <div class="ledger">
-        <div class="ptitle" style="font-size:.9rem">Money so far today</div>
-        <div class="lrow"><span>Sales revenue</span><span class="n mono pos" id="l_rev">₹0</span></div>
-        <div class="lrow"><span>Cost of power bought</span><span class="n mono neg" id="l_cost">₹0</span></div>
-        <div class="lrow"><span>Battery wear</span><span class="n mono neg" id="l_wear">₹0</span></div>
-        <div class="lrow"><span>Exchange fees</span><span class="n mono neg" id="l_fee">₹0</span></div>
-        <div class="lrow net"><span style="font-weight:700">Net profit</span><span class="n mono" id="l_net">₹0</span></div>
-      </div>
-      <div id="chart_race" style="height:190px;margin-top:6px"></div>
-      <div class="take" id="take_race"></div>
-    </div>
-  </div>
-
-  <div class="kpis" id="kpis"></div>
-
-  <div class="g2">
-    <div class="panel">
-      <div class="ptitle">Two years at a glance</div>
-      <div class="pline">Each square is a day: green means the copilot beat copying yesterday. Click any day to load it into the simulator.</div>
-      <div id="chart_cal" style="height:300px"></div>
-      <div class="take" id="take_cal"></div>
-    </div>
-    <div class="panel">
-      <div class="ptitle">Track record</div>
-      <div class="pline">Extra money over copying yesterday, adding up. Shaded: the test year the models never saw.</div>
-      <div id="chart_cum" style="height:300px"></div>
-      <div class="take" id="take_cum"></div>
-    </div>
-  </div>
-
-  <div class="g3">
-    <div class="panel">
-      <div class="ptitle">Your battery</div>
-      <div class="pline">Change the battery; every plan re-optimises instantly.</div>
-      <div class="settings">
-        <div><label>Power <output id="o_mw"></output></label><input id="mw" type="range" min="5" max="50" step="5" value="10"></div>
-        <div><label>Storage <output id="o_h"></output></label><input id="h" type="range" min="1" max="4" step="1" value="2"></div>
-        <div><label>Efficiency <output id="o_rte"></output></label><input id="rte" type="range" min="80" max="95" step="1" value="88"></div>
-        <div><label>Wear per MWh <output id="o_wear"></output></label><input id="wear" type="range" min="0" max="2000" step="100" value="1000"></div>
-        <div><label>Fee per MWh <output id="o_fee"></output></label><input id="fee" type="range" min="0" max="50" step="5" value="0"></div>
-        <div><label>Safety price limits <output id="o_guard">on</output></label><input id="guard" type="range" min="0" max="1" step="1" value="1"></div>
+      <div class="panel">
+        <div class="batt">
+          <div class="cell"><div class="fill" id="fill"></div></div>
+          <div><div class="socv mono" id="socp">10%</div><div id="socm" style="color:var(--muted);font-size:.9rem"></div><div class="stat" id="stat">Waiting</div></div>
+        </div>
+        <div class="ledger">
+          <div class="lrow"><span>Sales revenue</span><span class="n mono pos" id="l_rev">₹0</span></div>
+          <div class="lrow"><span>Power bought</span><span class="n mono neg" id="l_cost">₹0</span></div>
+          <div class="lrow"><span>Battery wear</span><span class="n mono neg" id="l_wear">₹0</span></div>
+          <div class="lrow"><span>Exchange fees</span><span class="n mono neg" id="l_fee">₹0</span></div>
+          <div class="lrow net"><span style="font-weight:700">Net profit</span><span class="n mono" id="l_net">₹0</span></div>
+        </div>
+        <div id="chart_race" style="height:180px;margin-top:6px"></div>
+        <div class="take" id="take_race"></div>
       </div>
     </div>
-    <div class="panel" style="grid-column: span 2">
-      <div class="ptitle">Orders for the exchange</div>
-      <div class="pline">The plan as buy and sell orders for each 15-minute block, with price limits from the forecast range.</div>
-      <div class="scroll"><table id="orders"></table></div>
-      <div style="margin-top:10px;display:flex;gap:10px;align-items:center"><button class="btn primary" id="dl">Download orders (CSV)</button><span id="ocount" style="color:var(--muted);font-size:.86rem"></span></div>
-    </div>
-  </div>
+    <div class="kpis" id="kpis"></div>
+  </section>
 
-  <div class="how">
-    <div class="panel"><div class="n">1</div><h4>Forecast</h4><p>LEAR, the standard research model, and Chronos, a deep-learning foundation model, guess all 96 prices for tomorrow. We blend them.</p></div>
-    <div class="panel"><div class="n">2</div><h4>Optimise</h4><p>An optimiser finds the plan that earns the most after losses and wear, within the battery's limits. It runs in your browser.</p></div>
-    <div class="panel"><div class="n">3</div><h4>Order</h4><p>The plan becomes exchange orders with safety price limits, ready to download and submit.</p></div>
-    <div class="panel"><div class="n">4</div><h4>Proven</h4><p id="proof"></p></div>
-  </div>
+  <section id="proof">
+    <h2>Proof on two years of real prices</h2>
+    <div class="g2">
+      <div class="panel"><div class="ptitle">Every day, at a glance</div><div class="pline">Green: the copilot beat copying yesterday. Click a day to replay it.</div><div id="chart_cal" style="height:280px"></div><div class="take" id="take_cal"></div></div>
+      <div class="panel"><div class="ptitle">Extra money, adding up</div><div class="pline">Compared with copying yesterday. Shaded: the year the models never saw.</div><div id="chart_cum" style="height:280px"></div><div class="take" id="take_cum"></div></div>
+    </div>
+  </section>
 </main>
 
 <script>
@@ -194,7 +197,7 @@ const SG = x => (x >= 0 ? "+" : "−") + "₹" + Math.abs(Math.round(x)).toLocal
 const SLOT = [...Array(97)].map((_, i) => String(Math.floor(i / 4)).padStart(2, "0") + ":" + String(15 * (i % 4)).padStart(2, "0"));
 const X = [...Array(96)].map((_, i) => i / 4 + 0.125);
 const C = { blue: "#2563eb", ink: "#0b1220", grey: "#9ca3af", green: "#10b981", red: "#ef4444", navy: "#0f2c59", amber: "#f59e0b" };
-const BASE = { font: { family: "Inter, system-ui, sans-serif", size: 12, color: "#0b1220" }, paper_bgcolor: "#fff", plot_bgcolor: "#fff",
+const BASE = { font: { family: "Inter, system-ui, sans-serif", size: 13, color: "#0b1220" }, paper_bgcolor: "#fff", plot_bgcolor: "#fff",
   margin: { l: 54, r: 54, t: 30, b: 34 }, legend: { orientation: "h", y: 1.1, x: 0, font: { size: 11 } }, hovermode: "x unified",
   hoverlabel: { bgcolor: "#fff", bordercolor: "#e5e7eb", font: { family: "Inter" } } };
 const CFG = { displayModeBar: false, responsive: true };
@@ -276,12 +279,10 @@ function renderKPIs() {
   const ref = P.d.known ? ledger(P.perfect, t).net : null, yd = ledger(P.yday, t).net;
   const k = (lab, v, sub, cls) => `<div class="kpi"><div class="k">${lab}</div><div class="v mono ${cls || ""}">${v}</div><div class="s">${sub}</div></div>`;
   $("kpis").innerHTML =
-    k("Average buy price", eb ? R(cb / eb) : "–", "per MWh bought so far") +
-    k("Average sell price", es ? R(cs / es) : "–", "per MWh sold so far") +
-    k("Capture rate", ref && ref > 0 ? Math.round(100 * L.net / ref) + "%" : "–", P.d.known ? "of perfect hindsight" : "known after the day") +
+    k("Capture rate", ref && ref > 0 ? Math.round(100 * L.net / ref) + "%" : "–", "of the best possible") +
     k("Spread captured", spread ? R(spread) : "–", "avg sell − avg buy, per MWh") +
     k("Cycles", cycles.toFixed(2), `equivalent full cycles · ${es.toFixed(1)} MWh sold`) +
-    k("Energy lost", (eb - es).toFixed(1) + " MWh", `round-trip losses · busy ${Math.round(100 * busy / 96)}% of slots`);
+    k("Energy lost", (eb - es).toFixed(1) + " MWh", "round-trip losses");
 }
 function renderMain() {
   const pl = active(), d = P.d, mask = a => a.map((v, k) => k < t ? v : null);
@@ -324,7 +325,7 @@ function renderCalendar() {
     colorscale: [[0, "#ef4444"], [0.45, "#fee2e2"], [0.5, "#f3f4f6"], [0.55, "#d1fae5"], [1, "#059669"]], zmid: 0, showscale: false }],
     Object.assign(clone(BASE), { margin: { l: 36, r: 8, t: 10, b: 30 }, hovermode: "closest", yaxis: { tickvals: [0, 1, 2, 3, 4, 5, 6], ticktext: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], autorange: "reversed", showgrid: false },
       xaxis: { tickvals: ticks.filter((_, i) => i % 2 === 0), ticktext: labs.filter((_, i) => i % 2 === 0), showgrid: false } }), CFG);
-  $("chart_cal").on("plotly_click", ev => { const i = ev.points[0].customdata; if (i !== null && i !== undefined) { setMode("replay"); di = i; loadDay(true); window.scrollTo({ top: 0, behavior: "smooth" }); } });
+  $("chart_cal").on("plotly_click", ev => { const i = ev.points[0].customdata; if (i !== null && i !== undefined) { di = i; loadDay(true); document.getElementById("replay").scrollIntoView({ behavior: "smooth" }); } });
 }
 function renderCum() {
   let c = 0; const y = D.res.blend_2.map((v, i) => (c += v - D.res.today_2[i]) / 1e5);
@@ -332,103 +333,98 @@ function renderCum() {
     Object.assign(clone(BASE), { margin: { l: 50, r: 10, t: 10, b: 30 }, showlegend: false, yaxis: { title: { text: "₹ lakh", font: { size: 11 } }, gridcolor: "#f3f4f6" },
       shapes: [{ type: "rect", xref: "x", yref: "paper", x0: "2025-11-22", x1: D.days[D.days.length - 1], y0: 0, y1: 1, fillcolor: "#eef2ff", opacity: 0.6, line: { width: 0 }, layer: "below" }] }), CFG);
 }
-function renderOrders() {
-  const pl = P.copilot, d = P.d, guard = +$("guard").value === 1, rows = [];
-  for (let k = 0; k < 96; k++) {
-    if (pl.buy[k] > 1e-6) rows.push([SLOT[k], k + 1, "BUY", (pl.buy[k] * 4).toFixed(2), guard ? d.hi[k] : "market"]);
-    if (pl.sell[k] > 1e-6) rows.push([SLOT[k], k + 1, "SELL", (pl.sell[k] * 4).toFixed(2), guard ? d.lo[k] : "market"]);
-  }
+let TP = null;
+function wtxt(arr) { const seg = []; let a = -1; for (let k = 0; k <= 96; k++) { const on = k < 96 && arr[k] > 1e-6; if (on && a < 0) a = k; if (!on && a >= 0) { seg.push([a, k]); a = -1; } }
+  const m = []; seg.forEach(g => { const l = m[m.length - 1]; if (l && g[0] - l[1] <= 4) l[1] = g[1]; else m.push([...g]); });
+  return m.map(([x, y]) => SLOT[x] + "–" + SLOT[y]).join(" and "); }
+function renderTomorrow() {
+  const s = S(), B = D.bid; TP = dpPlan(B.fc, s);
+  let rev = 0, cost = 0, wear = 0, fee = 0; for (let k = 0; k < 96; k++) { rev += B.fc[k] * TP.sell[k]; cost += B.fc[k] * TP.buy[k]; wear += s.wear * TP.sell[k]; fee += s.fee * (TP.buy[k] + TP.sell[k]); }
+  const exp = rev - cost - wear - fee, date = new Date(B.date + "T00:00");
+  $("t_eyebrow").textContent = "Tomorrow · " + date.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) + ` · ${s.mw} MW / ${s.mwh} MWh battery`;
+  $("t_head").innerHTML = `Buy at ${wtxt(TP.buy)}.<br>Sell at ${wtxt(TP.sell)}.`;
+  $("t_sub").innerHTML = `Expected profit <b style="color:var(--ink)">${R(exp)}</b> after battery losses and wear. Power is forecast to be cheapest at ${SLOT[B.fc.indexOf(Math.min(...B.fc))]} and dearest at ${SLOT[B.fc.indexOf(Math.max(...B.fc))]}.`;
+  const g = M.tests.test.blend_vs_today_2, mc = (cls, k, v, sub, vc) => `<div class="mcard ${cls}"><div class="k">${k}</div><div class="v ${vc || ""}">${v}</div><div class="s">${sub}</div></div>`;
+  $("money").innerHTML = mc("hero", "Expected profit tomorrow", R(exp), `buy ${TP.buy.reduce((a, b) => a + b, 0).toFixed(1)} MWh · sell ${TP.sell.reduce((a, b) => a + b, 0).toFixed(1)} MWh`) +
+    mc("", "Proven profit per day", R(M.test.blend_2), "average over a year it never saw") +
+    mc("", "Per year", "₹" + (M.test.blend_2 * 365 / 1e7).toFixed(2) + " crore", "10 MW / 20 MWh battery") +
+    mc("", "Extra vs copying yesterday", SG(g.gain) + "/day", `ahead in ${M.months_positive} of ${M.months_total} months`, "pos");
+  const tr = [{ x: X, y: B.hi, line: { width: 0 }, hoverinfo: "skip", showlegend: false },
+    { x: X, y: B.lo, fill: "tonexty", fillcolor: "rgba(37,99,235,0.12)", line: { width: 0 }, name: "likely range", hoverinfo: "skip" },
+    { x: X, y: B.fc, name: "forecast price", line: { color: C.blue, width: 2.8 } },
+    { x: X, y: TP.buy.map(v => v * 4), type: "bar", name: "buy (MW)", marker: { color: C.green }, yaxis: "y2", width: 0.2 },
+    { x: X, y: TP.sell.map(v => -v * 4), type: "bar", name: "sell (MW)", marker: { color: C.red }, yaxis: "y2", width: 0.2 },
+    { x: X, y: TP.soc, name: "stored (MWh)", line: { color: C.navy, width: 2, dash: "dot", shape: "spline" }, yaxis: "y3" }];
+  const L = Object.assign(clone(BASE), { barmode: "relative", margin: { l: 58, r: 60, t: 40, b: 36 },
+    xaxis: { range: [0, 24], tickvals: [0, 3, 6, 9, 12, 15, 18, 21, 24], ticktext: ["00:00", "03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00", "24:00"], showgrid: false, anchor: "y2" },
+    yaxis: { domain: [0.44, 1], title: { text: "₹ per MWh" }, gridcolor: "#f3f4f6", rangemode: "tozero" },
+    yaxis2: { domain: [0, 0.36], title: { text: "MW" }, gridcolor: "#f3f4f6", range: [-s.mw * 1.1, s.mw * 1.1] },
+    yaxis3: { domain: [0, 0.36], overlaying: "y2", side: "right", range: [0, s.mwh * 1.05], showgrid: false, title: { text: "MWh" } } });
+  Plotly.react("chart_t", tr, L, CFG);
+  const guard = +$("guard").value === 1, rows = [];
+  for (let k = 0; k < 96; k++) { if (TP.buy[k] > 1e-6) rows.push([SLOT[k], k + 1, "BUY", (TP.buy[k] * 4).toFixed(2), guard ? B.hi[k] : "market"]);
+    if (TP.sell[k] > 1e-6) rows.push([SLOT[k], k + 1, "SELL", (TP.sell[k] * 4).toFixed(2), guard ? B.lo[k] : "market"]); }
   $("orders").innerHTML = "<tr><th>Time</th><th>Block</th><th>Side</th><th class='r'>MW</th><th class='r'>Price limit ₹/MWh</th></tr>" +
     rows.map(r => `<tr><td class="mono">${r[0]}</td><td>${r[1]}</td><td style="font-weight:700;color:${r[2] === "BUY" ? "#059669" : "#dc2626"}">${r[2]}</td><td class="r mono">${r[3]}</td><td class="r mono">${typeof r[4] === "number" ? r[4].toLocaleString("en-IN") : r[4]}</td></tr>`).join("");
-  $("ocount").textContent = `${rows.length} orders for ${new Date(d.date + "T00:00").toDateString()}`;
+  $("ocount").textContent = `${rows.length} orders, ready for the exchange` + (guard ? " · safety price limits on" : "");
   $("dl").onclick = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["time,block,side,MW,price_limit\n" + rows.map(r => r.join(",")).join("\n")], { type: "text/csv" }));
-    a.download = `orders_${d.date}.csv`; a.click(); };
-}
-function renderMoney() {
-  const L = ledger(active(), t), yd = ledger(P.yday, t).net, full = t >= 96, lab = full ? "full day" : "so far, at " + SLOT[Math.min(t, 96)];
-  const mc = (cls, k, v, sub, vcls) => `<div class="mcard ${cls}"><div class="k">${k}</div><div class="v ${vcls || ""}">${v}</div><div class="s">${sub}</div></div>`;
-  $("money").innerHTML =
-    mc("hero", P.d.known ? "Net profit for this day" : "Expected profit tomorrow", R(L.net), lab) +
-    mc("", "Extra vs copying yesterday", SG(L.net - yd), "same battery, same day", L.net - yd >= 0 ? "pos" : "neg") +
-    mc("", "Revenue from selling", R(L.rev), lab) +
-    mc("", "Costs", "−" + R(L.cost + L.wear + L.fee), "power bought + wear + fees") +
-    mc("", "Proven over a full test year", R(M.test.blend_2) + "/day", "₹" + (M.test.blend_2 * 365 / 1e7).toFixed(2) + " crore a year · 10 MW / 20 MWh");
+    a.download = `orders_${B.date}.csv`; a.click(); };
 }
 function takeaways() {
   const pl = active(), p = P.d.price; let eb = 0, es = 0, cb = 0, cs = 0;
   for (let k = 0; k < 96; k++) { eb += pl.buy[k]; es += pl.sell[k]; cb += pl.buy[k] * p[k]; cs += pl.sell[k] * p[k]; }
   const ab = eb ? cb / eb : 0, as = es ? cs / es : 0;
-  $("take_main").innerHTML = es ? `<b>What happened:</b> the battery bought ${eb.toFixed(1)} MWh at an average of <b>${R(ab)}</b> when power was cheap and sold ${es.toFixed(1)} MWh at <b>${R(as)}</b> at the peaks, a spread of <b>${R(as - ab)}</b> per MWh.`
-                               : "<b>What happened:</b> no trade was worth the wear on this day, so the battery stayed idle.";
+  $("take_main").innerHTML = es ? `<b>What happened:</b> bought ${eb.toFixed(1)} MWh at <b>${R(ab)}</b> on average when power was cheap, sold ${es.toFixed(1)} MWh at <b>${R(as)}</b> at the peaks.` : "<b>What happened:</b> no trade was worth the wear, so the battery stayed idle.";
   const fn = ledger(pl, 96).net, fy = ledger(P.yday, 96).net, fp = P.perfect ? ledger(P.perfect, 96).net : null;
-  $("take_race").innerHTML = `<b>Outcome:</b> by midnight this plan earns <b>${R(fn)}</b>, ${fn >= fy ? "<b class='pos'>" + SG(fn - fy) + "</b> ahead of" : "<b class='neg'>" + SG(fn - fy) + "</b> behind"} copying yesterday` +
-    (fp ? `, and ${Math.round(100 * fn / fp)}% of the best possible.` : ".");
+  $("take_race").innerHTML = `<b>Outcome:</b> ${R(fn)} by midnight, <b class="${fn >= fy ? "pos" : "neg"}">${SG(fn - fy)}</b> vs copying yesterday` + (fp ? `, ${Math.round(100 * fn / fp)}% of the best possible.` : ".");
 }
 function staticTakeaways() {
   const gain = D.res.blend_2.map((v, i) => v - D.res.today_2[i]), wins = gain.filter(g => g > 0).length;
-  const best = Math.max(...gain), worst = Math.min(...gain);
-  $("take_cal").innerHTML = `<b>Outcome:</b> the copilot beat copying yesterday on <b>${wins} of ${gain.length} days</b> (${Math.round(100 * wins / gain.length)}%). Best day <b class="pos">${SG(best)}</b>, worst day <b class="neg">${SG(worst)}</b>.`;
+  $("take_cal").innerHTML = `<b>Outcome:</b> beat copying yesterday on <b>${wins} of ${gain.length} days</b> (${Math.round(100 * wins / gain.length)}%).`;
   let all = 0, test = 0; D.days.forEach((d, i) => { all += gain[i]; if (d >= "2025-11-22") test += gain[i]; });
-  $("take_cum").innerHTML = `<b>Outcome:</b> over two years the copilot earned <b>₹${(all / 1e5).toFixed(1)} lakh more</b> than copying yesterday, ₹${(test / 1e5).toFixed(1)} lakh of it in the test year it never saw.`;
+  $("take_cum").innerHTML = `<b>Outcome:</b> <b>₹${(all / 1e5).toFixed(1)} lakh more</b> than copying yesterday over two years, ₹${(test / 1e5).toFixed(1)} lakh in the unseen year.`;
 }
-// ---------------- test cases
 function dayCases() {
   const gain = D.res.blend_2.map((v, i) => v - D.res.today_2[i]), idx = D.days.map((d, i) => i), inTest = i => D.days[i] >= "2025-11-22";
-  const pick = (f, score) => { const c = idx.filter(f); return c.length ? c.reduce((a, b) => score(b) > score(a) ? b : a) : -1; };
-  const capped = i => D.actual[i].filter(v => v >= 10000).length, mon = i => +D.days[i].slice(5, 7), dow = i => new Date(D.days[i] + "T00:00").getDay();
-  const med = arr => { const s = [...arr].sort((a, b) => a - b); return s[Math.floor(s.length / 2)]; };
-  const sundays = idx.filter(i => inTest(i) && dow(i) === 0), sMed = med(sundays.map(i => gain[i]));
-  return [
-    ["Winter double peak", D.days.indexOf(M.example_day.date)],
-    ["Summer heatwave", pick(i => inTest(i) && (mon(i) === 5 || mon(i) === 6), i => D.res.perfect_2[i])],
+  const pick = (f, sc) => { const c = idx.filter(f); return c.length ? c.reduce((a, b) => sc(b) > sc(a) ? b : a) : -1; };
+  const mon = i => +D.days[i].slice(5, 7), dow = i => new Date(D.days[i] + "T00:00").getDay(), capped = i => D.actual[i].filter(v => v >= 10000).length;
+  const sundays = idx.filter(i => inTest(i) && dow(i) === 0), sm = [...sundays.map(i => gain[i])].sort((a, b) => a - b)[Math.floor(sundays.length / 2)];
+  return [["Winter day", D.days.indexOf(M.example_day.date)], ["Summer heatwave", pick(i => inTest(i) && (mon(i) === 5 || mon(i) === 6), i => D.res.perfect_2[i])],
     ["Monsoon day", pick(i => inTest(i) && mon(i) === 8, i => -Math.abs(D.res.perfect_2[i] - 110000))],
-    ["A Sunday", sundays.reduce((a, b) => Math.abs(gain[b] - sMed) < Math.abs(gain[a] - sMed) ? b : a, sundays[0])],
-    ["Republic Day", D.days.indexOf("2026-01-26")],
-    ["Price at the cap all day", pick(i => true, capped)],
-    ["Copilot's best day", pick(i => true, i => gain[i])],
-    ["Copilot's worst day", pick(i => true, i => -gain[i])],
-  ].filter(c => c[1] >= 0);
+    ["A Sunday", sundays.reduce((a, b) => Math.abs(gain[b] - sm) < Math.abs(gain[a] - sm) ? b : a, sundays[0])], ["Republic Day", D.days.indexOf("2026-01-26")],
+    ["Price at the cap", pick(() => true, capped)], ["Best day", pick(() => true, i => gain[i])], ["Worst day", pick(() => true, i => -gain[i])]].filter(c => c[1] >= 0);
 }
 const BATT = [["5 MW · 1 h", 5, 1, 88, 1000], ["10 MW · 2 h (base)", 10, 2, 88, 1000], ["10 MW · 4 h", 10, 4, 88, 1000], ["50 MW · 4 h", 50, 4, 90, 800], ["High wear ₹2,000", 10, 2, 88, 2000], ["Efficient 93%", 10, 2, 93, 1000]];
-function buildCases() {
-  $("daycases").innerHTML = dayCases().map(([n, i]) => `<button class="chip" data-i="${i}">${n}</button>`).join("");
-  $("daycases").querySelectorAll(".chip").forEach(b => b.onclick = () => { setMode("replay"); di = +b.dataset.i; markChip("daycases", b); loadDay(true); });
-  $("battcases").innerHTML = BATT.map((c, j) => `<button class="chip${j === 1 ? " on" : ""}" data-j="${j}">${c[0]}</button>`).join("");
-  $("battcases").querySelectorAll(".chip").forEach(b => b.onclick = () => { const c = BATT[+b.dataset.j]; $("mw").value = c[1]; $("h").value = c[2]; $("rte").value = c[3]; $("wear").value = c[4];
-    markChip("battcases", b); showSettings(); const keep = t; compute(); t = keep; renderOrders(); frame(); });
-}
 function markChip(id, b) { $(id).querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x === b)); }
-function frame() { renderSky(); renderBattery(); renderMoney(); renderKPIs(); renderMain(); renderRace(); takeaways(); $("scrub").value = t; }
-function loadDay(autoplay) {
-  stop(); compute(); t = mode === "tomorrow" ? 96 : 0;
-  const d = new Date(P.d.date + "T00:00");
-  $("daylab").textContent = d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) + (mode === "tomorrow" ? " · forecast" : " · real prices");
-  $("datein").value = P.d.date;
-  $("topline").textContent = mode === "tomorrow" ? "Tomorrow's prices are a forecast; this is the plan and the profit it expects. Download the orders below."
-                                                 : "Press play to watch the battery trade this real day, slot by slot, at the real prices.";
-  renderOrders(); frame(); if (autoplay) start();
+function buildCases() {
+  $("daycases").innerHTML = dayCases().map(([n, i], j) => `<button class="chip${j === 0 ? " on" : ""}" data-i="${i}">${n}</button>`).join("");
+  $("daycases").querySelectorAll(".chip").forEach(b => b.onclick = () => { di = +b.dataset.i; markChip("daycases", b); loadDay(true); });
+  $("battcases").innerHTML = BATT.map((c, j) => `<button class="chip${j === 1 ? " on" : ""}" data-j="${j}">${c[0]}</button>`).join("");
+  $("battcases").querySelectorAll(".chip").forEach(b => b.onclick = () => { const c = BATT[+b.dataset.j]; $("mw").value = c[1]; $("h").value = c[2]; $("rte").value = c[3]; $("wear").value = c[4]; markChip("battcases", b); settingsChanged(); });
 }
+function frame() { renderSky(); renderBattery(); renderKPIs(); renderMain(); renderRace(); takeaways(); $("scrub").value = t; }
+function loadDay(autoplay) { stop(); compute(); t = 0;
+  $("daylab").textContent = new Date(P.d.date + "T00:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) + " · real prices";
+  $("datein").value = P.d.date; frame(); if (autoplay) start(); }
 function start() { if (timer) return; if (t >= 96) t = 0; $("play").textContent = "Pause"; timer = setInterval(() => { t++; frame(); if (t >= 96) stop(); }, +$("speed").value); }
 function stop() { clearInterval(timer); timer = null; $("play").textContent = t >= 96 ? "Replay" : "Play"; }
-function setMode(m) { mode = m; document.querySelectorAll("#mode button").forEach(b => b.classList.toggle("on", b.dataset.m === m)); $("datebox").style.visibility = m === "tomorrow" ? "hidden" : "visible";
-  $("strat").querySelector("option[value=perfect]").disabled = m === "tomorrow"; if (m === "tomorrow" && $("strat").value === "perfect") $("strat").value = "copilot"; }
+function setMode() {}
+function showSettings() { $("o_mw").textContent = $("mw").value + " MW"; $("o_h").textContent = $("h").value + " h · " + (+$("mw").value * +$("h").value) + " MWh"; $("o_rte").textContent = $("rte").value + "%";
+  $("o_wear").textContent = R(+$("wear").value); $("o_fee").textContent = R(+$("fee").value); $("o_guard").textContent = +$("guard").value ? "on" : "off"; }
+function settingsChanged() { showSettings(); renderTomorrow(); const keep = t; compute(); t = keep; frame(); }
 
 $("play").onclick = () => timer ? stop() : start();
 $("scrub").oninput = e => { stop(); t = +e.target.value; frame(); };
 $("speed").onchange = () => { if (timer) { stop(); start(); } };
 $("strat").onchange = () => frame();
-document.querySelectorAll("#mode button").forEach(b => b.onclick = () => { setMode(b.dataset.m); loadDay(false); });
-$("prevd").onclick = () => { di = Math.max(0, di - 1); loadDay(false); };
-$("nextd").onclick = () => { di = Math.min(D.days.length - 1, di + 1); loadDay(false); };
 $("datein").min = D.days[0]; $("datein").max = D.days[D.days.length - 1];
-$("datein").onchange = e => { const i = D.days.indexOf(e.target.value); if (i >= 0) { di = i; loadDay(false); } };
-function showSettings() { $("o_mw").textContent = $("mw").value + " MW"; $("o_h").textContent = $("h").value + " h · " + (+$("mw").value * +$("h").value) + " MWh"; $("o_rte").textContent = $("rte").value + "%";
-  $("o_wear").textContent = R(+$("wear").value); $("o_fee").textContent = R(+$("fee").value); $("o_guard").textContent = +$("guard").value ? "on" : "off"; }
-["mw", "h", "rte", "wear", "fee"].forEach(id => $(id).oninput = () => { showSettings(); $("battcases").querySelectorAll(".chip").forEach(x => x.classList.remove("on")); const keep = t; compute(); t = keep; renderOrders(); frame(); });
-$("guard").oninput = () => { showSettings(); renderOrders(); };
-const g = M.tests.test.blend_vs_today_2;
-$("proof").innerHTML = `On a year it never saw: <b>${R(M.test.blend_2)}</b> a day, <b class="pos">${SG(g.gain)}</b> vs copying yesterday, ahead in ${M.months_positive} of ${M.months_total} months; chance it is luck under 0.1%.`;
-showSettings(); buildCases(); setMode("replay"); loadDay(false); renderCalendar(); renderCum(); staticTakeaways();
+$("datein").onchange = e => { const i = D.days.indexOf(e.target.value); if (i >= 0) { di = i; $("daycases").querySelectorAll(".chip").forEach(x => x.classList.remove("on")); loadDay(false); } };
+["mw", "h", "rte", "wear", "fee"].forEach(id => $(id).oninput = () => { $("battcases").querySelectorAll(".chip").forEach(x => x.classList.remove("on")); settingsChanged(); });
+$("guard").oninput = () => { showSettings(); renderTomorrow(); };
+$("openset").onclick = $("openset2").onclick = () => $("drawer").classList.add("open"); $("closeset").onclick = () => $("drawer").classList.remove("open");
+const g0 = M.tests.test.blend_vs_today_2;
+$("proofline").innerHTML = `Proven on a year it never saw: ${R(M.test.blend_2)} a day, ${SG(g0.gain)} vs copying yesterday; chance it is luck under 0.1%.`;
+mode = "replay"; showSettings(); buildCases(); renderTomorrow(); loadDay(false); renderCalendar(); renderCum(); staticTakeaways();
 </script>
 </body>
 </html>
