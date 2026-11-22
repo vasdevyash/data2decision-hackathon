@@ -102,15 +102,24 @@ details summary { cursor:pointer; list-style:none; } details summary::-webkit-de
 .tabs { display:flex; gap:2px; } .tabs button { border:0; background:transparent; font:inherit; font-weight:600; font-size:.95rem; color:var(--muted); padding:8px 13px; border-radius:9px; cursor:pointer; transition:all .15s; }
 .tabs button:hover { background:var(--soft); color:var(--ink); } .tabs button.on { background:var(--ink); color:#fff; }
 .tab { display:none; } .tab.on { display:block; animation: fade .3s ease; }
-.iexsteps { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:14px; }
-.iexsteps .panel { display:grid; gap:6px; align-content:start; } .iexsteps .when { font-weight:700; color:var(--blue); font-size:.82rem; letter-spacing:.04em; text-transform:uppercase; }
-.iexsteps h3 { margin:0; font-size:1.08rem; } .iexsteps p { margin:0; color:var(--muted); font-size:.92rem; line-height:1.55; } .iexsteps .us { color:var(--ink); font-weight:600; }
-.ikpi { display:grid; gap:10px; } .ikpi div { border-bottom:1px solid var(--line); padding-bottom:8px; } .ikpi div:last-child { border-bottom:0; }
-.ikpi .l { color:var(--muted); font-size:.8rem; } .ikpi .v { font-weight:700; font-size:1.35rem; font-variant-numeric:tabular-nums; }
-.ictl { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:8px; } .ictl select, .ictl input[type=range] { font:inherit; } .ictl select { border:1px solid var(--line); border-radius:10px; padding:6px 10px; background:#fff; }
-.ictl input[type=range] { flex:1; min-width:180px; } .ictl .slot { font-weight:700; font-variant-numeric:tabular-nums; min-width:118px; }
-.iexplain { margin-top:10px; font-size:.95rem; line-height:1.6; }
-@media (max-width:900px) { .iexsteps { grid-template-columns:1fr; } }
+.iexflow { display:grid; grid-template-columns:1fr 1fr; background:#fff; border:1px solid var(--line); border-radius:18px; margin-bottom:14px; }
+.iexday { padding:16px 18px; min-width:0; } .iexday + .iexday { border-left:1px solid var(--line); }
+.iexday .dname { font-weight:700; color:var(--muted); font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; margin-bottom:10px; }
+.iextrack { position:relative; height:44px; background:var(--soft); border-radius:10px; }
+.iexseg { position:absolute; top:5px; bottom:5px; border-radius:7px; color:#fff; font-weight:700; font-size:.8rem; display:flex; align-items:center; justify-content:center; white-space:nowrap; }
+.iexticks { position:relative; height:16px; color:var(--muted); font-size:.72rem; margin-top:4px; } .iexticks span { position:absolute; transform:translateX(-50%); }
+.iexcap { margin-top:10px; font-size:.9rem; line-height:1.5; } .iexcap b { color:var(--ink); }
+.ictl { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:6px; } .ictl select { font:inherit; border:1px solid var(--line); border-radius:10px; padding:6px 10px; background:#fff; }
+.ictl input[type=range] { flex:1; min-width:180px; } .ictl .slot { font-weight:700; font-variant-numeric:tabular-nums; min-width:110px; }
+.iexhead { font-size:1.15rem; font-weight:700; margin:6px 0 2px; } .iexhead .up { color:var(--red); } .iexhead .dn { color:var(--green); }
+.iexside { display:grid; gap:14px; align-content:start; padding-top:6px; }
+.vs .l { color:var(--muted); font-size:.82rem; margin-bottom:6px; } .vsrow { display:grid; grid-template-columns:70px 1fr 82px; gap:8px; align-items:center; font-size:.88rem; margin-bottom:6px; }
+.vsbar { height:14px; border-radius:7px; background:var(--soft); overflow:hidden; } .vsbar i { display:block; height:100%; border-radius:7px; }
+.vsrow .n { text-align:right; font-variant-numeric:tabular-nums; font-weight:600; }
+.bigp .l { color:var(--muted); font-size:.82rem; } .bigp .v { font-size:2rem; font-weight:800; font-variant-numeric:tabular-nums; line-height:1.15; } .bigp .s { color:var(--muted); font-size:.88rem; }
+.iexplain { font-size:.93rem; line-height:1.55; }
+.keys { display:flex; flex-wrap:wrap; gap:14px; font-size:.85rem; color:var(--muted); margin:2px 0 6px; } .keys span::before { content:""; display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; background:var(--c); }
+@media (max-width:900px) { .iexflow { grid-template-columns:1fr; } .iexday + .iexday { border-left:0; border-top:1px solid var(--line); } }
 .flow { margin:6px 0 0; padding-left:18px; line-height:1.9; font-size:.95rem; } .flow b { display:inline-block; min-width:96px; }
 .chk { display:flex; gap:10px; align-items:flex-start; padding:6px 0; border-bottom:1px solid var(--line); font-size:.95rem; } .chk:last-child { border-bottom:0; }
 .chk .i { flex:none; width:20px; height:20px; border-radius:50%; display:grid; place-items:center; color:#fff; font-size:.75rem; font-weight:800; margin-top:2px; }
@@ -124,7 +133,7 @@ details summary { cursor:pointer; list-style:none; } details summary::-webkit-de
 <body>
 <header><div class="hbar">
   <div class="brand">Battery <span>Copilot</span></div>
-  <nav class="tabs" id="tabs"><button data-t="iex">IEX</button><button data-t="tmr" class="on">Tomorrow's plan</button><button data-t="replay">Replay a day</button><button data-t="proof">Proof</button><button data-t="biz">Business case</button><button data-t="audit">Audit &amp; monitoring</button></nav>
+  <nav class="tabs" id="tabs"><button data-t="tmr" class="on">Tomorrow's plan</button><button data-t="replay">Replay a day</button><button data-t="proof">Proof</button><button data-t="biz">Business case</button><button data-t="audit">Audit &amp; monitoring</button><button data-t="iex">IEX</button></nav>
   <div class="spacer"></div>
   <button class="btn" id="openset">Battery settings</button>
 </div></header>
@@ -252,46 +261,46 @@ details summary { cursor:pointer; list-style:none; } details summary::-webkit-de
   <section id="iex" class="tab">
     <div class="eyebrow">The market</div>
     <h1>How the IEX Day-Ahead Market works</h1>
-    <p class="lede">Power for tomorrow is bought and sold today, in an auction on the Indian Energy Exchange. The copilot's job is to bid in that auction for the battery. Here is how the auction works, with real numbers.</p>
-    <div class="iexsteps">
-      <div class="panel"><div class="when">Today · 10:00 – 12:00</div><h3>1. Bids go in</h3>
-        <p>Buyers (state power companies, big factories) and sellers (power plants, batteries) bid for each of tomorrow's 96 fifteen-minute slots, for example "buy 2.5 MWh in the 13:00–13:15 slot at up to ₹3,000".</p>
-        <p class="us">This is when the copilot submits the battery's orders.</p></div>
-      <div class="panel"><div class="when">Today · about 13:00</div><h3>2. Prices are set</h3>
-        <p>For each slot, the exchange lines up buy bids from the highest price down and sell bids from the lowest price up. Where the two lines cross is that slot's <b>clearing price</b>. Everyone matched pays or receives that same price.</p></div>
-      <div class="panel"><div class="when">Tomorrow · 00:00 – 24:00</div><h3>3. Power flows</h3>
-        <p>The result is binding. The battery charges and discharges exactly as matched, and is paid at the clearing price.</p>
-        <p class="us">The catch: step 1 happens before step 2, so the copilot must guess tomorrow's prices.</p></div>
+    <p class="lede">Tomorrow's power is auctioned today. The battery bids as a buyer in cheap slots and as a seller in dear ones, and has to do it before it knows tomorrow's prices.</p>
+    <div class="iexflow">
+      <div class="iexday"><div class="dname">Today</div>
+        <div class="iextrack">
+          <div class="iexseg" style="left:41.67%;width:8.33%;background:var(--blue)">Bids</div>
+          <div class="iexseg" style="left:53.5%;width:6%;background:var(--navy)">Prices</div>
+        </div>
+        <div class="iexticks"><span style="left:0;transform:none">00:00</span><span style="left:41.67%">10:00</span><span style="left:54.17%">13:00</span><span style="left:100%;transform:translateX(-100%)">24:00</span></div>
+        <div class="iexcap"><b>10:00–12:00</b> everyone bids for each of tomorrow's 96 slots: buyers say how much they want and the most they will pay, sellers how much they offer and the least they will take. <b>About 13:00</b> the exchange publishes one clearing price per slot.</div></div>
+      <div class="iexday"><div class="dname">Tomorrow</div>
+        <div class="iextrack"><div class="iexseg" style="left:0;width:100%;background:var(--green)">Power flows: 96 slots of 15 minutes</div></div>
+        <div class="iexticks"><span style="left:0;transform:none">00:00</span><span style="left:50%">12:00</span><span style="left:100%;transform:translateX(-100%)">24:00</span></div>
+        <div class="iexcap">The result is binding: the battery charges and discharges exactly as matched and is paid the clearing price. <b>The catch:</b> its bids went in yesterday, before the prices were known, so it has to forecast them.</div></div>
     </div>
     <div class="panel" style="margin-bottom:14px">
       <div class="ptitle">One slot's auction</div>
-      <div class="pline">Pick a day and a slot. The crossing point is the clearing price everyone in that slot gets.</div>
       <div class="ictl">
         <select id="iex_day" aria-label="Day"></select>
         <button class="btn" id="iex_noon">13:00 · cheap</button><button class="btn" id="iex_eve">19:00 · dear</button>
         <input id="iex_slot" type="range" min="0" max="95" step="1" value="52" aria-label="Slot">
         <span class="slot" id="iex_slotlbl"></span>
       </div>
-      <div class="g2" style="margin-top:0">
-        <div id="chart_iex_auction" style="height:380px"></div>
-        <div class="ikpi" id="iex_kpi"></div>
+      <div class="iexhead" id="iex_head"></div>
+      <div class="g2" style="margin-top:4px">
+        <div id="chart_iex_auction" style="height:360px"></div>
+        <div class="iexside">
+          <div class="vs"><div class="l">Who wanted what in this slot</div><div id="iex_vs"></div></div>
+          <div class="bigp" id="iex_big"></div>
+          <div class="iexplain" id="iex_explain"></div>
+        </div>
       </div>
-      <div class="iexplain" id="iex_explain"></div>
     </div>
     <div class="panel" style="margin-bottom:14px">
-      <div class="ptitle">All 96 clearing prices of the day</div>
-      <div class="pline">Each bar is one slot's auction. Click a bar to see its auction above. Dashed line: the ₹10,000 price ceiling.</div>
+      <div class="ptitle">The whole day, slot by slot</div>
+      <div class="pline" id="iex_daysum"></div>
+      <div class="keys"><span style="--c:#10b981">Battery buys (charges)</span><span style="--c:#ef4444">Battery sells (discharges)</span><span style="--c:#cbd5e1">Battery waits</span></div>
       <div id="chart_iex_day" style="height:300px"></div>
+      <div class="row" style="margin-top:10px"><button class="btn primary" id="iex_go">See tomorrow's plan</button><span class="mut">The copilot does this every day, but with forecast prices instead of the real ones.</span></div>
     </div>
-    <div class="panel">
-      <div class="ptitle">So the problem, and our answer</div>
-      <ol class="flow"><li><b>Problem</b> Bids for tomorrow go in today, knowing only prices up to today.</li>
-        <li><b>Step 1</b> Forecast all 96 of tomorrow's clearing prices.</li>
-        <li><b>Step 2</b> An optimiser picks the cheapest slots to buy in and the dearest to sell in, within the battery's limits.</li>
-        <li><b>Step 3</b> Those become the orders submitted between 10:00 and 12:00.</li></ol>
-      <div class="row" style="margin-top:10px"><button class="btn primary" id="iex_go">See tomorrow's plan</button></div>
-    </div>
-    <p class="how">Curve shapes are illustrative. Each slot's total buy bids, total sell bids, cleared volume and clearing price are real IEX Day-Ahead Market figures.</p>
+    <p class="how">Bid curves are drawn as illustrative staircases. Each slot's total buy bids, total sell offers, matched volume and clearing price are real IEX Day-Ahead Market figures. The battery's buy and sell slots use the real prices with hindsight, for the battery set in Battery settings.</p>
   </section>
 </main>
 
@@ -652,50 +661,73 @@ const startTab = location.hash.replace("#", ""); if (["iex", "tmr", "replay", "p
   const CAP = 10000, days = Object.keys(X), fmt = v => "₹" + Math.round(v).toLocaleString("en-IN"), mw = v => Math.round(v).toLocaleString("en-IN") + " MW";
   let day = days[0], k = 52;
   $("iex_day").innerHTML = days.map(d => `<option value="${d}">${X[d].label}</option>`).join("");
+  const run = (q0, q1, p0, p1, n, curve) => Array.from({ length: n + 1 }, (_, i) => { const f = i / n; return [q0 + (q1 - q0) * f, p0 + (p1 - p0) * curve(f)]; });
+  const ease = f => f * f, early = f => 1 - (1 - f) * (1 - f);
   function curves(B, S, V, P) {
-    const capped = P >= CAP - 0.5;
-    const dq = capped ? [[0, CAP], [Math.max(V * 1.08, B * 0.8), CAP], [B, 0]] : [[0, CAP], [Math.min(V * 0.55, B * 0.5), CAP], [V, P], [B, 0]];
-    const S2 = Math.max(S, V);
-    const sq = capped ? [[0, 0], [V * 0.5, CAP * 0.25], [V, CAP]] : [[0, 0], [V * 0.45, P * 0.25], [V, P], [S2, CAP]];
-    return { dq, sq, capped };
+    if (P >= CAP - 0.5) {
+      const qd = Math.max(V * 1.15, B * 0.82);
+      return { capped: true, buy: [[0, CAP], [qd, CAP], ...run(qd, B, CAP, 0, 4, early).slice(1)], sell: [...run(0, V, 0, CAP, 6, ease), [Math.max(S, V), CAP]] };
+    }
+    return { capped: false, buy: [...run(0, V, CAP, P, 6, early), ...run(V, B, P, 0, 4, early).slice(1)], sell: [...run(0, V, 0, P, 6, ease), ...run(V, Math.max(S, V), P, CAP, 6, ease).slice(1)] };
   }
+  function plan(d) { try { return dpPlan(d.mcp, S()); } catch (e) { return { buy: d.mcp.map(() => 0), sell: d.mcp.map(() => 0) }; } }
   function draw() {
-    const d = X[day], B = d.buy[k], S = d.sell[k], V = d.mcv[k], P = d.mcp[k], c = curves(B, S, V, P), share = 10 / V * 100;
+    const d = X[day], B = d.buy[k], Sv = d.sell[k], V = d.mcv[k], P = d.mcp[k], c = curves(B, Sv, V, P), share = 10 / V * 100;
     $("iex_slot").value = k; $("iex_slotlbl").textContent = d.slot[k].replace(" - ", "–");
-    const lay = clone(BASE); lay.hovermode = "closest"; lay.margin = { l: 64, r: 20, t: 20, b: 46 };
-    lay.xaxis = { title: { text: "Volume (MW)" }, range: [0, Math.max(B * 1.12, V * 1.6)], gridcolor: "#f1f5f9", tickformat: "," };
-    lay.yaxis = { title: { text: "Price (₹ per MWh)" }, range: [0, 10800], gridcolor: "#f1f5f9", tickformat: "," };
-    lay.shapes = [{ type: "line", x0: 0, x1: Math.max(B, S) * 1.02, y0: CAP, y1: CAP, line: { dash: "dash", color: "#9ca3af", width: 1 } }];
-    lay.annotations = [{ x: V, y: P, text: `Clearing price ${fmt(P)}<br>${mw(V)} matched`, showarrow: true, arrowhead: 2, ax: 70, ay: c.capped ? 40 : -45, font: { size: 12 }, bgcolor: "#fff", bordercolor: "#e5e7eb" },
-      { x: 0, y: CAP, xanchor: "left", yanchor: "bottom", text: "price ceiling ₹10,000", showarrow: false, font: { size: 11, color: "#6b7280" } }];
+    const more = Sv > B ? "sellers" : "buyers";
+    $("iex_head").innerHTML = c.capped
+      ? `More buyers than sellers, so the price hits the <span class="up">₹10,000 ceiling</span>`
+      : (Sv > B ? `More sellers than buyers, so the price falls to <span class="dn">${fmt(P)}</span>` : `Buyers and sellers meet at <span class="up">${fmt(P)}</span>`);
+    const xmax = c.capped ? B * 1.05 : Math.max(B, V) * 1.3;
+    const lay = clone(BASE); lay.hovermode = "closest"; lay.showlegend = false; lay.margin = { l: 64, r: 16, t: 14, b: 44 };
+    lay.xaxis = { title: { text: "Megawatts in this slot" }, range: [0, xmax], gridcolor: "#f1f5f9", tickformat: ",", zeroline: false };
+    lay.yaxis = { title: { text: "Price, ₹ per MWh" }, range: [0, 10900], gridcolor: "#f1f5f9", tickformat: ",", zeroline: false };
+    lay.shapes = [{ type: "rect", x0: 0, x1: V, y0: 0, y1: P, fillcolor: "rgba(16,185,129,0.13)", line: { width: 0 }, layer: "below" },
+      { type: "line", x0: 0, x1: xmax, y0: CAP, y1: CAP, line: { dash: "dot", color: "#9ca3af", width: 1 } }];
+    const sellAt = q => { let pr = 0; for (const [qq, pp] of c.sell) { if (qq <= q) pr = pp; } return Math.min(pr, CAP); };
+    const sx = c.capped ? Math.min(Math.max(Sv, V), xmax) * 0.97 : xmax * 0.97;
+    lay.annotations = [
+      { x: V / 2, y: Math.max(P / 2, 900), text: `<b>${mw(V)} sold at ${fmt(P)}</b>`, showarrow: false, font: { size: 12, color: "#047857" } },
+      { x: V, y: P, text: `<b>${fmt(P)}</b>`, showarrow: true, arrowhead: 0, ax: c.capped ? 34 : -44, ay: c.capped ? 26 : -34, font: { size: 13 }, bgcolor: "#fff", bordercolor: "#0b1220", borderpad: 3 },
+      { x: c.capped ? xmax * 0.62 : xmax * 0.012, y: CAP, yshift: 12, xanchor: c.capped ? "center" : "left", text: "<b>Buyers</b> (the most they'll pay)", showarrow: false, font: { size: 12, color: "#2563eb" } },
+      { x: c.capped ? V * 1.04 : sx, y: c.capped ? CAP * 0.42 : sellAt(sx), yshift: c.capped ? 0 : 14, xanchor: c.capped ? "left" : "right", text: "<b>Sellers</b> (the least they'll take)", showarrow: false, font: { size: 12, color: "#d97706" } },
+      { x: xmax, y: CAP, yshift: -10, xanchor: "right", text: "price ceiling", showarrow: false, font: { size: 10, color: "#9ca3af" } }];
+    if (!c.capped && Sv > xmax) lay.annotations.push({ x: xmax, y: P + (CAP - P) * 0.35, xanchor: "right", text: `sellers offer ${mw(Sv)} in all →`, showarrow: false, font: { size: 11, color: "#d97706" } });
     Plotly.react("chart_iex_auction", [
-      { x: c.dq.map(p => p[0]), y: c.dq.map(p => p[1]), name: "Buy bids (highest price first)", mode: "lines", line: { color: "#2563eb", width: 3, shape: "linear" }, hovertemplate: "Buyers want %{x:,.0f} MW at ₹%{y:,.0f}<extra></extra>" },
-      { x: c.sq.map(p => p[0]), y: c.sq.map(p => p[1]), name: "Sell bids (lowest price first)", mode: "lines", line: { color: "#f59e0b", width: 3, shape: "linear" }, hovertemplate: "Sellers offer %{x:,.0f} MW at ₹%{y:,.0f}<extra></extra>" },
-      { x: [V], y: [P], mode: "markers", marker: { size: 12, color: "#0b1220" }, showlegend: false, hoverinfo: "skip" }
+      { x: c.buy.map(q => q[0]), y: c.buy.map(q => q[1]), mode: "lines", line: { color: "#2563eb", width: 3, shape: "hv" }, hovertemplate: "Buyers: %{x:,.0f} MW at up to ₹%{y:,.0f}<extra></extra>" },
+      { x: c.sell.map(q => q[0]), y: c.sell.map(q => q[1]), mode: "lines", line: { color: "#f59e0b", width: 3, shape: "hv" }, hovertemplate: "Sellers: %{x:,.0f} MW at ₹%{y:,.0f} or more<extra></extra>" },
+      { x: [V], y: [P], mode: "markers", marker: { size: 13, color: "#0b1220", line: { color: "#fff", width: 2 } }, hoverinfo: "skip" }
     ], lay, CFG);
-    $("iex_kpi").innerHTML = `<div><div class="l">Clearing price</div><div class="v">${fmt(P)}</div></div>
-      <div><div class="l">Volume matched</div><div class="v">${mw(V)}</div></div>
-      <div><div class="l">All buy bids · all sell bids</div><div class="v">${mw(B)} · ${mw(S)}</div></div>
-      <div><div class="l">Our battery's size in this slot</div><div class="v">10 MW · ${share < 1 ? share.toFixed(2) : share.toFixed(1)}%</div></div>`;
+    const mx = Math.max(B, Sv);
+    $("iex_vs").innerHTML = [["Buyers", B, "#2563eb"], ["Sellers", Sv, "#f59e0b"], ["Matched", V, "#10b981"]].map(r =>
+      `<div class="vsrow"><span>${r[0]}</span><div class="vsbar"><i style="width:${Math.max(1.5, r[1] / mx * 100)}%;background:${r[2]}"></i></div><span class="n">${mw(r[1])}</span></div>`).join("");
+    $("iex_big").innerHTML = `<div class="l">Clearing price</div><div class="v">${fmt(P)}</div><div class="s">per MWh · our battery is ${share < 1 ? share.toFixed(2) : share.toFixed(1)}% of the volume, so it takes this price</div>`;
     $("iex_explain").innerHTML = c.capped
-      ? `<b>A scarce slot.</b> Buyers wanted ${mw(B)} but sellers offered only ${mw(S)}, and ${mw(V)} was matched. Supply ran out, so the price hit the ₹10,000 ceiling, the most the regulator allows. A battery that saved energy for this slot sells at the highest possible price.`
-      : `<b>${P < 3000 ? "A cheap slot." : "A normal slot."}</b> Sellers offered ${mw(S)}, far more than the ${mw(V)} that buyers took at this price, so the price settled at ${fmt(P)}. ${P < 3000 ? "This is when the battery buys." : ""} Our 10 MW is ${share < 1 ? share.toFixed(2) : share.toFixed(1)}% of the volume, too small to move the price: we simply take it.`;
-    const lay2 = clone(BASE); lay2.hovermode = "closest"; lay2.margin = { l: 64, r: 20, t: 10, b: 40 }; lay2.bargap = 0.15;
-    lay2.xaxis = { tickvals: [0, 12, 24, 36, 48, 60, 72, 84, 95], ticktext: ["00", "03", "06", "09", "12", "15", "18", "21", "24"], title: { text: "Hour of the day" } };
-    lay2.yaxis = { range: [0, 10800], tickformat: ",", title: { text: "₹ per MWh" }, gridcolor: "#f1f5f9" };
-    lay2.shapes = [{ type: "line", x0: -0.5, x1: 95.5, y0: CAP, y1: CAP, line: { dash: "dash", color: "#9ca3af", width: 1 } }];
-    Plotly.react("chart_iex_day", [{ type: "bar", x: d.mcp.map((_, i) => i), y: d.mcp, customdata: d.slot,
-      marker: { color: d.mcp.map((_, i) => i === k ? "#0b1220" : (d.mcp[i] >= CAP - 0.5 ? "#fca5a5" : "#93b4f5")) },
+      ? `Buyers wanted ${mw(B)} but only ${mw(Sv)} was offered. Supply ran out, so the price stopped at the ₹10,000 ceiling. <b>Best time for the battery to sell.</b>`
+      : Sv > B ? `Sellers (mostly solar at midday) offered far more than buyers wanted, so the price dropped to ${fmt(P)}. <b>${P < 3000 ? "Best time for the battery to buy." : "A middling slot."}</b>`
+      : `Demand and supply were close, so the price settled at ${fmt(P)}.`;
+    const pl = plan(d), col = d.mcp.map((_, i) => pl.buy[i] > 1e-6 ? "#10b981" : pl.sell[i] > 1e-6 ? "#ef4444" : "#cbd5e1");
+    const nb = pl.buy.filter(x => x > 1e-6).length, ns = pl.sell.filter(x => x > 1e-6).length;
+    const avg = (w) => { const t = w.reduce((a, b) => a + b, 0); return t ? w.reduce((a, b, i) => a + b * d.mcp[i], 0) / t : 0; };
+    $("iex_daysum").textContent = `Each bar is one slot's clearing price. With hindsight, the battery buys in ${nb} slots at about ${fmt(avg(pl.buy))} and sells in ${ns} at about ${fmt(avg(pl.sell))}. Click a bar to see its auction above.`;
+    const lay2 = clone(BASE); lay2.hovermode = "closest"; lay2.showlegend = false; lay2.margin = { l: 64, r: 16, t: 10, b: 40 }; lay2.bargap = 0.12;
+    lay2.xaxis = { tickvals: [0, 12, 24, 36, 48, 60, 72, 84, 95.5], ticktext: ["00", "03", "06", "09", "12", "15", "18", "21", "24"], title: { text: "Hour of the day" }, range: [-0.6, 95.6] };
+    lay2.yaxis = { range: [0, 10900], tickformat: ",", title: { text: "₹ per MWh" }, gridcolor: "#f1f5f9" };
+    lay2.shapes = [{ type: "line", x0: -0.5, x1: 95.5, y0: CAP, y1: CAP, line: { dash: "dot", color: "#9ca3af", width: 1 } },
+      { type: "rect", x0: k - 0.5, x1: k + 0.5, y0: 0, y1: 10900, fillcolor: "rgba(11,18,32,0.07)", line: { color: "#0b1220", width: 1.5 }, layer: "below" }];
+    Plotly.react("chart_iex_day", [{ type: "bar", x: d.mcp.map((_, i) => i), y: d.mcp, customdata: d.slot, marker: { color: col },
       hovertemplate: "%{customdata}: ₹%{y:,.0f}<extra></extra>" }], lay2, CFG);
   }
   let bound = false;
   function bind() { if (bound) return; bound = true; $("chart_iex_day").on("plotly_click", ev => { k = ev.points[0].x; draw(); }); }
+  const show = () => setTimeout(() => { draw(); bind(); }, 40);
   $("iex_day").onchange = e => { day = e.target.value; draw(); };
   $("iex_slot").oninput = e => { k = +e.target.value; draw(); };
   $("iex_noon").onclick = () => { k = 52; draw(); };
   $("iex_eve").onclick = () => { k = 76; draw(); };
   $("iex_go").onclick = () => showTab("tmr");
-  document.querySelector('#tabs button[data-t="iex"]').addEventListener("click", () => setTimeout(() => { draw(); bind(); }, 40));
+  document.querySelector('#tabs button[data-t="iex"]').addEventListener("click", show);
+  document.querySelectorAll(".settings input").forEach(el => el.addEventListener("input", () => { if ($("iex").classList.contains("on")) draw(); }));
   if (location.hash === "#iex") setTimeout(() => { draw(); bind(); }, 60);
 })();
 </script>
