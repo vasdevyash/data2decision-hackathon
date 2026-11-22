@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Battery Copilot · Live trading desk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script src="data.js"></script>
 <style>
 :root { --ink:#0b1220; --muted:#6b7280; --line:#e5e7eb; --soft:#f6f7f9; --blue:#2563eb; --navy:#0f2c59; --green:#10b981; --red:#ef4444; --amber:#f59e0b; }
 * { box-sizing:border-box; }
 body { margin:0; font-family:Inter,system-ui,sans-serif; color:var(--ink); background:var(--soft); -webkit-font-smoothing:antialiased; }
-.mono { font-family:'JetBrains Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums; }
+.mono { font-variant-numeric:tabular-nums; }
 header { background:#fff; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20; }
 .hbar { max-width:1360px; margin:0 auto; padding:0 20px; height:62px; display:flex; align-items:center; gap:18px; }
 .brand { font-weight:800; font-size:1.05rem; letter-spacing:-.01em; white-space:nowrap; } .brand span { color:var(--blue); }
@@ -69,8 +69,21 @@ table { width:100%; border-collapse:collapse; font-size:.86rem; } th, td { paddi
 .how { display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; margin-top:16px; }
 .how .n { width:28px; height:28px; border-radius:50%; background:var(--ink); color:#fff; display:grid; place-items:center; font-weight:700; font-size:.85rem; }
 .how h4 { margin:10px 0 4px; font-size:.95rem; } .how p { margin:0; color:var(--muted); font-size:.86rem; line-height:1.5; }
+.money { display:grid; grid-template-columns: 1.3fr 1fr 1fr 1fr 1fr; gap:12px; margin-bottom:14px; }
+.mcard { background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px 16px; }
+.mcard.hero { background:var(--ink); color:#fff; border-color:var(--ink); }
+.mcard .k { font-size:.78rem; font-weight:600; color:var(--muted); } .mcard.hero .k { color:#cbd5e1; }
+.mcard .v { font-size:1.9rem; font-weight:800; letter-spacing:-.02em; margin-top:4px; font-variant-numeric:tabular-nums; } .mcard.hero .v { font-size:2.2rem; }
+.mcard .s { font-size:.8rem; margin-top:2px; color:var(--muted); } .mcard.hero .s { color:#cbd5e1; }
+.cases { display:flex; flex-wrap:wrap; gap:10px 26px; margin:0 0 14px; }
+.cases > div { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.clab { font-size:.78rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-right:4px; }
+.chip { border:1px solid var(--line); background:#fff; font:inherit; font-size:.84rem; font-weight:600; padding:6px 12px; border-radius:999px; cursor:pointer; transition:all .15s; color:var(--ink); }
+.chip:hover { border-color:var(--blue); color:var(--blue); } .chip.on { background:var(--blue); border-color:var(--blue); color:#fff; }
+.take { margin-top:6px; padding:9px 12px; background:#f0f7ff; border-radius:10px; font-size:.88rem; color:#1e3a8a; font-weight:500; }
+.take b { color:#0b1220; }
 .fade { animation: fade .35s ease; } @keyframes fade { from { opacity:.3; } to { opacity:1; } }
-@media (max-width:1100px) { .top, .g2, .g3 { grid-template-columns:1fr; } .kpis { grid-template-columns: repeat(3,1fr); } .how { grid-template-columns:1fr 1fr; } }
+@media (max-width:1100px) { .money { grid-template-columns:1fr 1fr; } .top, .g2, .g3 { grid-template-columns:1fr; } .kpis { grid-template-columns: repeat(3,1fr); } .how { grid-template-columns:1fr 1fr; } }
 </style>
 </head>
 <body>
@@ -82,6 +95,11 @@ table { width:100%; border-collapse:collapse; font-size:.86rem; } th, td { paddi
 </div></header>
 
 <main>
+  <div class="money" id="money"></div>
+  <div class="cases">
+    <div><span class="clab">Try a day</span><span id="daycases"></span></div>
+    <div><span class="clab">Try a battery</span><span id="battcases"></span></div>
+  </div>
   <div class="top">
     <div class="panel">
       <div class="ptitle">Live trading day</div>
@@ -99,6 +117,7 @@ table { width:100%; border-collapse:collapse; font-size:.86rem; } th, td { paddi
         <select id="strat" title="Which plan the battery follows"><option value="copilot">Copilot plan</option><option value="yday">Copy yesterday</option><option value="fixed">Fixed timetable</option><option value="perfect">Perfect hindsight</option></select>
       </div>
       <div id="chart_main" class="chart" style="height:430px"></div>
+      <div class="take" id="take_main"></div>
     </div>
 
     <div class="panel">
@@ -117,6 +136,7 @@ table { width:100%; border-collapse:collapse; font-size:.86rem; } th, td { paddi
         <div class="lrow net"><span style="font-weight:700">Net profit</span><span class="n mono" id="l_net">₹0</span></div>
       </div>
       <div id="chart_race" style="height:190px;margin-top:6px"></div>
+      <div class="take" id="take_race"></div>
     </div>
   </div>
 
@@ -127,11 +147,13 @@ table { width:100%; border-collapse:collapse; font-size:.86rem; } th, td { paddi
       <div class="ptitle">Two years at a glance</div>
       <div class="pline">Each square is a day: green means the copilot beat copying yesterday. Click any day to load it into the simulator.</div>
       <div id="chart_cal" style="height:300px"></div>
+      <div class="take" id="take_cal"></div>
     </div>
     <div class="panel">
       <div class="ptitle">Track record</div>
       <div class="pline">Extra money over copying yesterday, adding up. Shaded: the test year the models never saw.</div>
       <div id="chart_cum" style="height:300px"></div>
+      <div class="take" id="take_cum"></div>
     </div>
   </div>
 
@@ -254,8 +276,8 @@ function renderKPIs() {
   const ref = P.d.known ? ledger(P.perfect, t).net : null, yd = ledger(P.yday, t).net;
   const k = (lab, v, sub, cls) => `<div class="kpi"><div class="k">${lab}</div><div class="v mono ${cls || ""}">${v}</div><div class="s">${sub}</div></div>`;
   $("kpis").innerHTML =
-    k("Net profit", R(L.net), t >= 96 ? "full day" : "so far today", L.net >= 0 ? "pos" : "neg") +
-    k("vs copying yesterday", SG(L.net - yd), "same battery, same day", L.net - yd >= 0 ? "pos" : "neg") +
+    k("Average buy price", eb ? R(cb / eb) : "–", "per MWh bought so far") +
+    k("Average sell price", es ? R(cs / es) : "–", "per MWh sold so far") +
     k("Capture rate", ref && ref > 0 ? Math.round(100 * L.net / ref) + "%" : "–", P.d.known ? "of perfect hindsight" : "known after the day") +
     k("Spread captured", spread ? R(spread) : "–", "avg sell − avg buy, per MWh") +
     k("Cycles", cycles.toFixed(2), `equivalent full cycles · ${es.toFixed(1)} MWh sold`) +
@@ -278,6 +300,10 @@ function renderMain() {
     yaxis2: { domain: [0, 0.36], title: { text: "MW", font: { size: 11 } }, gridcolor: "#f3f4f6", range: [-P.s.mw * 1.1, P.s.mw * 1.1] },
     yaxis3: { domain: [0, 0.36], overlaying: "y2", side: "right", range: [0, P.s.mwh * 1.05], showgrid: false, title: { text: "MWh", font: { size: 11 } } },
     shapes: [{ type: "line", x0: t / 4, x1: t / 4, y0: 0, y1: 1, xref: "x", yref: "paper", line: { color: "#0b1220", width: 1.4, dash: "dot" } }] });
+  const wins = (arr, lab, col, y) => { const seg = []; let a = -1; for (let k = 0; k <= 96; k++) { const on = k < 96 && arr[k] > 1e-6; if (on && a < 0) a = k; if (!on && a >= 0) { seg.push([a, k]); a = -1; } }
+    const merged = []; seg.forEach(sg => { const last = merged[merged.length - 1]; if (last && sg[0] - last[1] <= 4) last[1] = sg[1]; else merged.push([...sg]); });   // join windows less than an hour apart
+    return merged.map(([a0, k0]) => ({ x: (a0 + k0) / 8, y, yref: "y2", text: lab, showarrow: false, font: { size: 11, color: col, family: "Inter" }, bgcolor: "rgba(255,255,255,0.85)" })); };
+  L.annotations = [...wins(pl.buy, "BUY", "#047857", P.s.mw * 0.95), ...wins(pl.sell, "SELL", "#b91c1c", -P.s.mw * 0.95)];
   Plotly.react("chart_main", tr, L, CFG);
 }
 function renderRace() {
@@ -318,7 +344,61 @@ function renderOrders() {
   $("dl").onclick = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["time,block,side,MW,price_limit\n" + rows.map(r => r.join(",")).join("\n")], { type: "text/csv" }));
     a.download = `orders_${d.date}.csv`; a.click(); };
 }
-function frame() { renderSky(); renderBattery(); renderKPIs(); renderMain(); renderRace(); $("scrub").value = t; }
+function renderMoney() {
+  const L = ledger(active(), t), yd = ledger(P.yday, t).net, full = t >= 96, lab = full ? "full day" : "so far, at " + SLOT[Math.min(t, 96)];
+  const mc = (cls, k, v, sub, vcls) => `<div class="mcard ${cls}"><div class="k">${k}</div><div class="v ${vcls || ""}">${v}</div><div class="s">${sub}</div></div>`;
+  $("money").innerHTML =
+    mc("hero", P.d.known ? "Net profit for this day" : "Expected profit tomorrow", R(L.net), lab) +
+    mc("", "Extra vs copying yesterday", SG(L.net - yd), "same battery, same day", L.net - yd >= 0 ? "pos" : "neg") +
+    mc("", "Revenue from selling", R(L.rev), lab) +
+    mc("", "Costs", "−" + R(L.cost + L.wear + L.fee), "power bought + wear + fees") +
+    mc("", "Proven over a full test year", R(M.test.blend_2) + "/day", "₹" + (M.test.blend_2 * 365 / 1e7).toFixed(2) + " crore a year · 10 MW / 20 MWh");
+}
+function takeaways() {
+  const pl = active(), p = P.d.price; let eb = 0, es = 0, cb = 0, cs = 0;
+  for (let k = 0; k < 96; k++) { eb += pl.buy[k]; es += pl.sell[k]; cb += pl.buy[k] * p[k]; cs += pl.sell[k] * p[k]; }
+  const ab = eb ? cb / eb : 0, as = es ? cs / es : 0;
+  $("take_main").innerHTML = es ? `<b>What happened:</b> the battery bought ${eb.toFixed(1)} MWh at an average of <b>${R(ab)}</b> when power was cheap and sold ${es.toFixed(1)} MWh at <b>${R(as)}</b> at the peaks, a spread of <b>${R(as - ab)}</b> per MWh.`
+                               : "<b>What happened:</b> no trade was worth the wear on this day, so the battery stayed idle.";
+  const fn = ledger(pl, 96).net, fy = ledger(P.yday, 96).net, fp = P.perfect ? ledger(P.perfect, 96).net : null;
+  $("take_race").innerHTML = `<b>Outcome:</b> by midnight this plan earns <b>${R(fn)}</b>, ${fn >= fy ? "<b class='pos'>" + SG(fn - fy) + "</b> ahead of" : "<b class='neg'>" + SG(fn - fy) + "</b> behind"} copying yesterday` +
+    (fp ? `, and ${Math.round(100 * fn / fp)}% of the best possible.` : ".");
+}
+function staticTakeaways() {
+  const gain = D.res.blend_2.map((v, i) => v - D.res.today_2[i]), wins = gain.filter(g => g > 0).length;
+  const best = Math.max(...gain), worst = Math.min(...gain);
+  $("take_cal").innerHTML = `<b>Outcome:</b> the copilot beat copying yesterday on <b>${wins} of ${gain.length} days</b> (${Math.round(100 * wins / gain.length)}%). Best day <b class="pos">${SG(best)}</b>, worst day <b class="neg">${SG(worst)}</b>.`;
+  let all = 0, test = 0; D.days.forEach((d, i) => { all += gain[i]; if (d >= "2025-11-22") test += gain[i]; });
+  $("take_cum").innerHTML = `<b>Outcome:</b> over two years the copilot earned <b>₹${(all / 1e5).toFixed(1)} lakh more</b> than copying yesterday, ₹${(test / 1e5).toFixed(1)} lakh of it in the test year it never saw.`;
+}
+// ---------------- test cases
+function dayCases() {
+  const gain = D.res.blend_2.map((v, i) => v - D.res.today_2[i]), idx = D.days.map((d, i) => i), inTest = i => D.days[i] >= "2025-11-22";
+  const pick = (f, score) => { const c = idx.filter(f); return c.length ? c.reduce((a, b) => score(b) > score(a) ? b : a) : -1; };
+  const capped = i => D.actual[i].filter(v => v >= 10000).length, mon = i => +D.days[i].slice(5, 7), dow = i => new Date(D.days[i] + "T00:00").getDay();
+  const med = arr => { const s = [...arr].sort((a, b) => a - b); return s[Math.floor(s.length / 2)]; };
+  const sundays = idx.filter(i => inTest(i) && dow(i) === 0), sMed = med(sundays.map(i => gain[i]));
+  return [
+    ["Winter double peak", D.days.indexOf(M.example_day.date)],
+    ["Summer heatwave", pick(i => inTest(i) && (mon(i) === 5 || mon(i) === 6), i => D.res.perfect_2[i])],
+    ["Monsoon day", pick(i => inTest(i) && mon(i) === 8, i => -Math.abs(D.res.perfect_2[i] - 110000))],
+    ["A Sunday", sundays.reduce((a, b) => Math.abs(gain[b] - sMed) < Math.abs(gain[a] - sMed) ? b : a, sundays[0])],
+    ["Republic Day", D.days.indexOf("2026-01-26")],
+    ["Price at the cap all day", pick(i => true, capped)],
+    ["Copilot's best day", pick(i => true, i => gain[i])],
+    ["Copilot's worst day", pick(i => true, i => -gain[i])],
+  ].filter(c => c[1] >= 0);
+}
+const BATT = [["5 MW · 1 h", 5, 1, 88, 1000], ["10 MW · 2 h (base)", 10, 2, 88, 1000], ["10 MW · 4 h", 10, 4, 88, 1000], ["50 MW · 4 h", 50, 4, 90, 800], ["High wear ₹2,000", 10, 2, 88, 2000], ["Efficient 93%", 10, 2, 93, 1000]];
+function buildCases() {
+  $("daycases").innerHTML = dayCases().map(([n, i]) => `<button class="chip" data-i="${i}">${n}</button>`).join("");
+  $("daycases").querySelectorAll(".chip").forEach(b => b.onclick = () => { setMode("replay"); di = +b.dataset.i; markChip("daycases", b); loadDay(true); });
+  $("battcases").innerHTML = BATT.map((c, j) => `<button class="chip${j === 1 ? " on" : ""}" data-j="${j}">${c[0]}</button>`).join("");
+  $("battcases").querySelectorAll(".chip").forEach(b => b.onclick = () => { const c = BATT[+b.dataset.j]; $("mw").value = c[1]; $("h").value = c[2]; $("rte").value = c[3]; $("wear").value = c[4];
+    markChip("battcases", b); showSettings(); const keep = t; compute(); t = keep; renderOrders(); frame(); });
+}
+function markChip(id, b) { $(id).querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x === b)); }
+function frame() { renderSky(); renderBattery(); renderMoney(); renderKPIs(); renderMain(); renderRace(); takeaways(); $("scrub").value = t; }
 function loadDay(autoplay) {
   stop(); compute(); t = mode === "tomorrow" ? 96 : 0;
   const d = new Date(P.d.date + "T00:00");
@@ -344,11 +424,11 @@ $("datein").min = D.days[0]; $("datein").max = D.days[D.days.length - 1];
 $("datein").onchange = e => { const i = D.days.indexOf(e.target.value); if (i >= 0) { di = i; loadDay(false); } };
 function showSettings() { $("o_mw").textContent = $("mw").value + " MW"; $("o_h").textContent = $("h").value + " h · " + (+$("mw").value * +$("h").value) + " MWh"; $("o_rte").textContent = $("rte").value + "%";
   $("o_wear").textContent = R(+$("wear").value); $("o_fee").textContent = R(+$("fee").value); $("o_guard").textContent = +$("guard").value ? "on" : "off"; }
-["mw", "h", "rte", "wear", "fee"].forEach(id => $(id).oninput = () => { showSettings(); const keep = t; compute(); t = keep; renderOrders(); frame(); });
+["mw", "h", "rte", "wear", "fee"].forEach(id => $(id).oninput = () => { showSettings(); $("battcases").querySelectorAll(".chip").forEach(x => x.classList.remove("on")); const keep = t; compute(); t = keep; renderOrders(); frame(); });
 $("guard").oninput = () => { showSettings(); renderOrders(); };
 const g = M.tests.test.blend_vs_today_2;
 $("proof").innerHTML = `On a year it never saw: <b>${R(M.test.blend_2)}</b> a day, <b class="pos">${SG(g.gain)}</b> vs copying yesterday, ahead in ${M.months_positive} of ${M.months_total} months; chance it is luck under 0.1%.`;
-showSettings(); setMode("replay"); loadDay(false); renderCalendar(); renderCum();
+showSettings(); buildCases(); setMode("replay"); loadDay(false); renderCalendar(); renderCum(); staticTakeaways();
 </script>
 </body>
 </html>
