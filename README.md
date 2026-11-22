@@ -9,6 +9,22 @@ Team workspace for the Data2Decision Hackathon (November 2026).
 | M1 – Decide (problem canvas) | Done |
 | M2 | **In progress**: problem statement received |
 
+## Rules and deadlines
+
+Full rules (photos of the printed instructions): [`docs/Hackathon_Rules.pdf`](docs/Hackathon_Rules.pdf)
+
+| Milestone | Deadline | Marks | Deliverable |
+|---|---|---|---|
+| M2 – FIND | 11:15 AM | 10 | Data Note (max 2-page PDF) + dataset or data link |
+| M3 – UNDERSTAND | 1:00 PM | 15 | Exploratory analysis (max 3-page PDF) + notebook/code |
+| M4 – BUILD | 2:45 PM | 20 | Working solution + validation (max 3-page PDF) + notebook/code |
+| M5 – ACT | 3:45 PM | 10 | Decision brief (max 2-page PDF) + final presentation/demo, AI use record, signed declaration |
+
+- File names: Team ID + milestone, e.g. `D01_M2.pdf`.
+- We may refine the received problem but not replace it: no change to industry, stakeholder or core decision. Log every refinement in the M2 Data Note.
+- Everything is frozen at 3:45 PM. Shortlisted teams present 4:00–6:00 PM, so keep the deck and demo ready.
+- Disclose significant AI use and be ready to explain every result; cite reused code and data.
+
 ## Problem statement (M2)
 
 **Battery Dispatch Against Day-Ahead Prices** (Energy & Renewables). Full canvas:
