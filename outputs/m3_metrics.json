@@ -1,0 +1,273 @@
+{
+ "quality": {
+  "days": 1331.0,
+  "days_not_96_blocks": 0.0,
+  "duplicate_blocks": 0.0,
+  "null_prices": 0.0,
+  "max_price": 10000.0,
+  "min_price": 20.81,
+  "capped_share_pct": 18.8,
+  "volume_flag_blocks": 32.0,
+  "congested_share_pct": 2.5
+ },
+ "n_days": 1331,
+ "weather_missing_days": 0,
+ "holidays_in_window": 66,
+ "cap_evening_may_pct": 55.0,
+ "cap_evening_aug_pct": 67.0,
+ "midday_min_month": 11,
+ "midday_min_price": 2160.0,
+ "midday_max_month": 1,
+ "midday_max_price": 3830.0,
+ "bench": {
+  "validate": {
+   "fixed": 57139,
+   "lag1_1": 94978,
+   "lag7_1": 90031,
+   "lag1_2": 113643,
+   "hind1": 101168,
+   "hind2": 121796,
+   "cap_fixed": 0.565,
+   "cap_lag1_1": 0.939,
+   "cap_lag7_1": 0.89,
+   "cap_lag1_2": 0.933,
+   "lag1_vs_fixed_ci": [
+    32471,
+    43683
+   ],
+   "second_cycle_ci": [
+    10766,
+    27089
+   ],
+   "fixed_loss_days": 6,
+   "lag1_1_loss_days": 0
+  },
+  "test": {
+   "fixed": 75091,
+   "lag1_1": 102110,
+   "lag7_1": 96428,
+   "lag1_2": 121401,
+   "hind1": 107757,
+   "hind2": 130354,
+   "cap_fixed": 0.697,
+   "cap_lag1_1": 0.948,
+   "cap_lag7_1": 0.895,
+   "cap_lag1_2": 0.931,
+   "lag1_vs_fixed_ci": [
+    21768,
+    32203
+   ],
+   "second_cycle_ci": [
+    13232,
+    26359
+   ],
+   "fixed_loss_days": 2,
+   "lag1_1_loss_days": 0
+  }
+ },
+ "weekday_rule": {
+  "Sun": 7,
+  "Mon": 1,
+  "Tue": 1,
+  "Wed": 1,
+  "Thu": 1,
+  "Fri": 1,
+  "Sat": 1
+ },
+ "weekday_gain": {
+  "validate": {
+   "gain_1c": 763,
+   "ci_1c": [
+    322,
+    1275
+   ],
+   "gain_2c": 1070,
+   "cap_1c": 0.946
+  },
+  "test": {
+   "gain_1c": 854,
+   "ci_1c": [
+    426,
+    1287
+   ],
+   "gain_2c": 329,
+   "cap_1c": 0.956
+  }
+ },
+ "test_by_dow_lag1_capture": {
+  "Sun": 0.838,
+  "Mon": 0.977,
+  "Tue": 0.955,
+  "Wed": 0.969,
+  "Thu": 0.959,
+  "Fri": 0.967,
+  "Sat": 0.938
+ },
+ "mae1_by_dow": {
+  "Sun": 774,
+  "Mon": 767,
+  "Tue": 432,
+  "Wed": 458,
+  "Thu": 505,
+  "Fri": 505,
+  "Sat": 463
+ },
+ "mae7_by_dow": {
+  "Sun": 768,
+  "Mon": 766,
+  "Tue": 768,
+  "Wed": 747,
+  "Thu": 846,
+  "Fri": 782,
+  "Sat": 798
+ },
+ "weather": {
+  "midday": {
+   "r2_oos_weather_calendar": 0.428,
+   "r2_oos_calendar_only": 0.433,
+   "coef": {
+    "d_solar_midday_wm2": -0.81,
+    "d_cloud_midday_pct": -1.11,
+    "d_temp_max_c": 68.83,
+    "d_wind_kmh": -10.01
+   }
+  },
+  "evening": {
+   "r2_oos_weather_calendar": 0.506,
+   "r2_oos_calendar_only": 0.499,
+   "coef": {
+    "d_temp_evening_c": 141.92,
+    "d_temp_max_c": -17.79,
+    "d_wind_evening_kmh": -16.82,
+    "d_solar_midday_wm2": -0.62
+   }
+  }
+ },
+ "corr_dsolar_dmidday": [
+  -0.07,
+  0.010723183223135322
+ ],
+ "corr_dtemp_devening": [
+  0.05,
+  0.05843779373249079
+ ],
+ "corr_solar_midday_level": 0.04,
+ "second_cycle": {
+  "corr_v2_morning_gap": 0.38,
+  "corr_v2_persistence": 0.81,
+  "share_days_lag1_2c_worse": 0.167,
+  "v2_by_season_test": {
+   "Jul-Sep": 14099,
+   "Mar-Jun": -111,
+   "Oct-Feb": 38129
+  },
+  "v2_hind_mean_test": 22597,
+  "v2_by_gap_quintile": [
+   1113,
+   5880,
+   12098,
+   27233,
+   40021
+  ]
+ },
+ "conditional_cycling": {
+  "threshold": 3000,
+  "validate": {
+   "mean": 114551,
+   "gain_vs_lag1_2": 909,
+   "ci": [
+    128,
+    1712
+   ],
+   "capture": 0.941,
+   "share_2c_days": 0.39
+  },
+  "test": {
+   "mean": 122015,
+   "gain_vs_lag1_2": 614,
+   "ci": [
+    29,
+    1183
+   ],
+   "capture": 0.936,
+   "share_2c_days": 0.56
+  }
+ },
+ "anomalies": {
+  "days_all_evening_capped": 108,
+  "days_any_cap": 1070,
+  "max_capped_blocks_day": 96,
+  "rolling30_min": 2635,
+  "rolling30_min_date": "2025-10-31",
+  "rolling30_max": 8117,
+  "rolling30_max_date": "2023-09-07",
+  "holiday_mean_price_gap": -522,
+  "fixed_worst_day": -39911,
+  "fixed_worst_date": "2023-09-01",
+  "top10_spread_anomalies": [
+   [
+    "2024-12-29",
+    "Sun",
+    2490,
+    -25.6
+   ],
+   [
+    "2025-02-16",
+    "Sun",
+    2649,
+    -21.6
+   ],
+   [
+    "2025-01-26",
+    "Sun",
+    3285,
+    -19.9
+   ],
+   [
+    "2025-12-28",
+    "Sun",
+    2719,
+    -19.6
+   ],
+   [
+    "2024-12-15",
+    "Sun",
+    2967,
+    -19.0
+   ],
+   [
+    "2024-11-17",
+    "Sun",
+    2599,
+    -18.1
+   ],
+   [
+    "2025-03-14",
+    "Fri",
+    2854,
+    -18.1
+   ],
+   [
+    "2024-12-08",
+    "Sun",
+    3000,
+    -17.8
+   ],
+   [
+    "2025-12-21",
+    "Sun",
+    3921,
+    -15.5
+   ],
+   [
+    "2025-12-14",
+    "Sun",
+    3900,
+    -15.2
+   ]
+  ],
+  "top10_share_sunday_or_holiday": 1.0,
+  "sunday_spread_vs_weekday": 0.793,
+  "fixed_worst_day_evening_minus_midday": 0
+ }
+}

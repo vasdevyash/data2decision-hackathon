@@ -21,3 +21,6 @@ venv/
 
 # Public IEX price data is shared with the team
 !data/raw/iex_dam_15min.csv
+
+# Small derived weather indices (Open-Meteo, CC BY 4.0) so the M3 notebook runs from a fresh clone
+!data/processed/weather_daily.csv
